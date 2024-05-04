@@ -9,7 +9,7 @@
         <a v-if="isMainTopic(topic) || isMainTopicSelected(topic)"
            :class="{'sub-topic' : isSubTopic(topic), 'card-element' : isMainTopic(topic)}"
            :href="getTopicUrl(topics, topic)"
-           @click="expandSubTopic(topics, topic)">
+           @click="expandSubTopic(topics, topic, $event)">
           <span>{{ getTopicOrSubTopicName(topic) }}</span>
           <img v-if="hasSubTopics(topics, topic)"
                :class="{'card-element-arrow-up' : isMainTopicSelected(topic)}"
@@ -54,8 +54,9 @@ export default {
     getTopicUrl(topics, topic) {
       return this.flattenTopics(topics)[topic];
     },
-    expandSubTopic(topics, topic) {
+    expandSubTopic(topics, topic, event) {
       this.selectedTopic = topic;
+      event.stopPropagation();
     },
     flattenTopics(topics) {
       let result = {};
@@ -164,7 +165,7 @@ export default {
 }
 
 .fade-enter-active, .fade-leave-active {
-  transition: height 0.5s ease;
+  transition: height 0.25s ease;
 }
 
 .fade-enter-from, .fade-leave-to {
