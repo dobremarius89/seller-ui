@@ -41,6 +41,7 @@ export default {
     wrongPassword: null,
     error: null
   }),
+
   methods: {
     login() {
       router.push({
@@ -54,7 +55,7 @@ export default {
 <style scoped>
 #container {
   margin: 0 auto;
-  width: 1960px;
+  width: 1920px;
   height: 100vh;
 }
 

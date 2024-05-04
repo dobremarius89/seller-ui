@@ -25,6 +25,11 @@ export default {
   src: url('../public/fonts/Inter-Regular.ttf') format("truetype");
 }
 
+@font-face {
+  font-family: "Inter-Bold";
+  src: url('../public/fonts/Inter-Bold.ttf') format("truetype");
+}
+
 html, body {
   margin: 0;
   background: white;
