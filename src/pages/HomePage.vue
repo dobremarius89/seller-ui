@@ -8,6 +8,10 @@
         <strategy-card/>
         <engagement-card/>
       </div>
+      <div id="tables-container">
+        <table-header/>
+        <table-component/>
+      </div>
     </div>
   </div>
 </template>
@@ -17,9 +21,11 @@ import UpcomingCard from "@/components/UpcomingCard.vue";
 import HeaderComponent from "@/components/HeaderComponent.vue";
 import EngagementCard from "@/components/EngagementCard.vue";
 import StrategyCard from "@/components/MetricCard.vue";
+import TableComponent from "@/components/TableComponent.vue";
+import TableHeader from "@/components/TableHeader.vue";
 
 export default {
-  components: {StrategyCard, EngagementCard, HeaderComponent, UpcomingCard}
+  components: {TableHeader, TableComponent, StrategyCard, EngagementCard, HeaderComponent, UpcomingCard}
 }
 </script>
 
@@ -35,5 +41,12 @@ export default {
   margin: 40px 60px 0 60px;
   display: flex;
   justify-content: space-between;
+}
+
+#tables-container {
+  margin: 40px 0 0 60px;
+  background-color: #4B465C;
+  height: 800px;
+  width: 1160px;
 }
 </style>

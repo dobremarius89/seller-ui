@@ -26,7 +26,7 @@ export default defineComponent({
 
   data: () => ({
     stars: [],
-    engagement: 63
+    engagement: 33
   }),
 
   methods: {

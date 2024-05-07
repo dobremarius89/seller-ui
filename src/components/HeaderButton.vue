@@ -26,8 +26,7 @@ export default {
 .button {
   margin-right: 18px;
   min-width: 60px;
-  height: 0;
-  padding-top: 60px;
+  height: 60px;
   border-radius: 30px;
   border: none;
   background-color: #F2F4F7;
@@ -39,12 +38,11 @@ export default {
 
 .image {
   scale: 65%;
-  margin-top: -60px;
 }
 
 .arrow {
   scale: 65%;
-  margin: -60px 10px 0 0;
+  padding-right: 5px;
   transition: transform 0.5s ease;
 }
 
@@ -53,7 +51,7 @@ export default {
 }
 
 .text {
-  margin: -60px 10px 0 10px;
+  margin: 0 5px 0 5px;
   font-size: 18px;
   color: black;
   font-family: Inter-SemiBold, serif;
