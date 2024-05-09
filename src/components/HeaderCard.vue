@@ -98,9 +98,9 @@ export default {
 
 .card-title {
   align-items: center;
-  border-bottom: 1px solid #4B465C;
+  border-bottom: 1px solid #D0D5DD;
   min-width: 280px;
-  height: 70px;
+  height: 60px;
   display: flex;
   margin: 0 20px 0 20px;
 }
@@ -150,8 +150,7 @@ export default {
 }
 
 .card-element:hover {
-  border-bottom: 1px solid;
-  border-bottom-color: rgba(75, 70, 92, 0.25);
+  border-bottom: 1px solid #D0D5DD;
 }
 
 .card-element-arrow {

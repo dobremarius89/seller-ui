@@ -1,635 +1,99 @@
 <template>
   <div v-dragscroll.x id="table-content">
-    <button style="height: 50px; width: 50px" @click="group('Status')"/>
+    <button style="display: none; height: 50px; width: 50px" @click="group('Status')"/>
     <div id="table-component-header">
-      <div v-for="(column, index) in rearrangedColumns" class="table-component-header-cell" :key="index">
-        {{ column.headerName }}
+      <div v-for="(column, index) in getVisibleColumns(columns)" class="table-component-header-cell" :key="index">
+        {{ column.name }}
       </div>
     </div>
     <div v-for="(group, groupIndex) in groupedRows" class="table-component-group" :key="groupIndex">
-      <div class="table-component-group-header" @click="toggleExpandGroup(groupIndex)">
+      <div class="table-component-group-header" @dblclick="toggleExpandGroup(groupIndex)">
         <div class="table-component-group-name">
           <div class="table-component-group-text">{{ group.value }}</div>
-          <div class="table-component-group-count">
-            {{ group.count }}
-          </div>
+          <div class="table-component-group-count">{{ group.count }}</div>
           <img :class="{'table-component-group-arrow-up' : isExpanded(groupIndex)}" class="table-component-group-arrow" src="@/assets/home/arrow_down.png"/>
         </div>
       </div>
-      <div v-if="isExpanded(groupIndex)" class="table-component-group-rows">
-        <div v-for="(row, index) in group.rows" class="table-component-group-row" :key="index">
-          <div v-for="(column, index) in rearrangedColumns" class="table-component-group-cell" :key="index">
-            {{ row[column.field] }}
+      <transition name="fade">
+        <div v-if="isExpanded(groupIndex)" class="table-component-group-rows">
+          <div v-for="(row, index) in group.rows" class="table-component-group-row" :key="index">
+            <div v-for="(column, index) in getVisibleColumns(columns)" class="table-component-group-cell" :key="index">
+              {{ row[column.field] }}
+            </div>
           </div>
         </div>
-      </div>
+      </transition>
     </div>
     <div v-if="!isGroupingActive" id="table-component-body">
       <div v-for="(row, index) in rows" class="table-component-body-row" :key="index">
-        <div v-for="(column, index) in rearrangedColumns" class="table-component-body-cell" :key="index">
+        <div v-for="(column, index) in getVisibleColumns(columns)" class="table-component-body-cell" :key="index">
           {{ row[column.field] }}
         </div>
       </div>
     </div>
   </div>
-  <div id="table-contentX" style="height: 500px; visibility: hidden" class="ag-theme-quartz"
-       @mouseup="stopScrolling"
-       @mousedown="startScrolling"/>
 </template>
 
 <script>
-import "ag-grid-community/styles/ag-grid.css";
-import "ag-grid-community/styles/ag-theme-quartz.css";
-import {createGrid} from "ag-grid-community";
 import {dragscroll} from "vue-dragscroll";
+import {getGroupingColum} from "@/utils/table-utils";
 
 export default {
   directives: {
     dragscroll
   },
 
-  mounted() {
-    this.gridApi = createGrid(document.getElementById("table-contentX"), this.getGridOptions());
+  updated() {
+    //Update group header width to match the width of the header
+    //Update is running only when grouping is clicked and update width has not been performed
+    if (this.isGroupingActive && !this.groupHeaderWidthUpdated) {
+      const tableHeader = document.getElementById("table-component-header");
+      const groupHeaders = document.getElementsByClassName("table-component-group-header");
+      for (let i = 0; i < groupHeaders.length; i++) {
+        const header = groupHeaders[i];
+        header.style.width = tableHeader.scrollWidth + "px";
+      }
+      this.groupHeaderWidthUpdated = true;
+    }
+  },
 
-    //Deep clone to keep the original data intact
-    // this.groupedRows = JSON.parse(JSON.stringify(this.rows));
-    this.rearrangedColumns = JSON.parse(JSON.stringify(this.columns));
+  watch: {
+    columns(updatedColumns) {
+      this.initTable();
+      const groupingColumn = getGroupingColum(updatedColumns);
+      if (groupingColumn) {
+        this.groupByColumn(groupingColumn)
+      }
+    }
+  },
+
+  props: {
+    rows: Object,
+    columns: Object
   },
 
   data: () => ({
-    rows: [
-      {
-        "customer": "Acme Inc",
-        "wintactic": "3D Engage",
-        "status": "Review",
-        "tags": "#3D,#Manuf,#x-sell",
-        "action_date": "1-Jun-24",
-        "start_date": "1-Jan-24",
-        "end_date": "31-Dec-24",
-        "strategy": "Acquire New Logos",
-        "unread_comments": 0,
-        "total_comments": 0
-      },
-      {
-        "customer": "Acme Inc",
-        "wintactic": "Hyper-care Upsell",
-        "status": "Review",
-        "tags": "#service,#priority_3",
-        "action_date": "",
-        "start_date": "1-Jan-24",
-        "end_date": "31-Dec-24",
-        "strategy": "Expand Footprint",
-        "unread_comments": 0,
-        "total_comments": 0
-      },
-      {
-        "customer": "Acme Inc",
-        "wintactic": "Renew Support",
-        "status": "Dismiss",
-        "tags": "#service,#priority_2",
-        "action_date": "1-Feb-24",
-        "start_date": "1-Jan-24",
-        "end_date": "31-Dec-24",
-        "strategy": "Retain",
-        "unread_comments": 0,
-        "total_comments": 2
-      },
-      {
-        "customer": "Acme Inc",
-        "wintactic": "Tech Refresh Printers",
-        "status": "Pursue",
-        "tags": "#retain,#priority_1,#traditional",
-        "action_date": "",
-        "start_date": "1-Jan-24",
-        "end_date": "31-Dec-24",
-        "strategy": "Improve Customer Lifetime Value",
-        "unread_comments": 3,
-        "total_comments": 8
-      },
-      {
-        "customer": "Acme Inc",
-        "wintactic": "Transform aaS",
-        "status": "Review",
-        "tags": "#aas,#priority#2,#opex",
-        "action_date": "",
-        "start_date": "1-Jan-24",
-        "end_date": "31-Dec-24",
-        "strategy": "Pivot to aaS",
-        "unread_comments": 1,
-        "total_comments": 5
-      },
-      {
-        "customer": "Astral",
-        "wintactic": "Tech Refresh Printers",
-        "status": "Dismiss",
-        "tags": "#retain,#priority_1,#traditional",
-        "action_date": "",
-        "start_date": "1-Jan-24",
-        "end_date": "31-Dec-24",
-        "strategy": "Improve Customer Lifetime Value",
-        "unread_comments": 0,
-        "total_comments": 0
-      },
-      {
-        "customer": "Astral",
-        "wintactic": "Transform aaS",
-        "status": "Pursue",
-        "tags": "#aas,#priority#2,#opex",
-        "action_date": "",
-        "start_date": "1-Jan-24",
-        "end_date": "31-Dec-24",
-        "strategy": "Pivot to aaS",
-        "unread_comments": 0,
-        "total_comments": 0
-      },
-      {
-        "customer": "Apex Ventures",
-        "wintactic": "Tech Refresh Printers",
-        "status": "Review",
-        "tags": "#retain,#priority_1,#traditional",
-        "action_date": "1-Jun",
-        "start_date": "1-Jan-24",
-        "end_date": "31-Dec-24",
-        "strategy": "Improve Customer Lifetime Value",
-        "unread_comments": 0,
-        "total_comments": 1
-      },
-      {
-        "customer": "Apex Ventures",
-        "wintactic": "Transform aaS",
-        "status": "Review",
-        "tags": "#aas,#priority#2,#opex",
-        "action_date": "1-Jun",
-        "start_date": "1-Jan-24",
-        "end_date": "31-Dec-24",
-        "strategy": "Pivot to aaS",
-        "unread_comments": 0,
-        "total_comments": 0
-      },
-      {
-        "customer": "Celestial Synthetics",
-        "wintactic": "3D Engage",
-        "status": "Review",
-        "tags": "#3D,#Manuf,#x-sell",
-        "action_date": "1-Jun",
-        "start_date": "1-Jan-24",
-        "end_date": "31-Dec-24",
-        "strategy": "Acquire New Logos",
-        "unread_comments": 0,
-        "total_comments": 1
-      },
-      {
-        "customer": "Celestial Synthetics",
-        "wintactic": "Renew Support",
-        "status": "Review",
-        "tags": "#service,#priority_2",
-        "action_date": "",
-        "start_date": "1-Jan-24",
-        "end_date": "31-Dec-24",
-        "strategy": "Retain",
-        "unread_comments": 0,
-        "total_comments": 0
-      },
-      {
-        "customer": "Cosmo Catalyst",
-        "wintactic": "Hyper-care Upsell",
-        "status": "Review",
-        "tags": "#service,#priority_3",
-        "action_date": "",
-        "start_date": "1-Jan-24",
-        "end_date": "31-Dec-24",
-        "strategy": "Expand Footprint",
-        "unread_comments": 0,
-        "total_comments": 0
-      },
-      {
-        "customer": "CyberPulse",
-        "wintactic": "Renew Support",
-        "status": "Review",
-        "tags": "#service,#priority_2",
-        "action_date": "",
-        "start_date": "1-Jan-24",
-        "end_date": "31-Dec-24",
-        "strategy": "Retain",
-        "unread_comments": 0,
-        "total_comments": 0
-      },
-      {
-        "customer": "CyberPulse",
-        "wintactic": "Tech Refresh Printers",
-        "status": "Review",
-        "tags": "#retain,#priority_1,#traditional",
-        "action_date": "",
-        "start_date": "1-Jan-24",
-        "end_date": "31-Dec-24",
-        "strategy": "Improve Customer Lifetime Value",
-        "unread_comments": 1,
-        "total_comments": 2
-      },
-      {
-        "customer": "CyberPulse",
-        "wintactic": "Transform aaS",
-        "status": "Pursue",
-        "tags": "#aas,#priority#2,#opex",
-        "action_date": "",
-        "start_date": "1-Jan-24",
-        "end_date": "31-Dec-24",
-        "strategy": "Pivot to aaS",
-        "unread_comments": 0,
-        "total_comments": 0
-      },
-      {
-        "customer": "Elysian Echo Systems",
-        "wintactic": "3D Engage",
-        "status": "Dismiss",
-        "tags": "#3D,#Manuf,#x-sell",
-        "action_date": "",
-        "start_date": "1-Jan-24",
-        "end_date": "31-Dec-24",
-        "strategy": "Acquire New Logos",
-        "unread_comments": 0,
-        "total_comments": 1
-      },
-      {
-        "customer": "Elysian Echo Systems",
-        "wintactic": "Hyper-care Upsell",
-        "status": "Dismiss",
-        "tags": "#service,#priority_3",
-        "action_date": "",
-        "start_date": "1-Jan-24",
-        "end_date": "31-Dec-24",
-        "strategy": "Expand Footprint",
-        "unread_comments": 0,
-        "total_comments": 0
-      },
-      {
-        "customer": "Elysian Echo Systems",
-        "wintactic": "Transform aaS",
-        "status": "Dismiss",
-        "tags": "#aas,#priority#2,#opex",
-        "action_date": "",
-        "start_date": "1-Jan-24",
-        "end_date": "31-Dec-24",
-        "strategy": "Pivot to aaS",
-        "unread_comments": 0,
-        "total_comments": 0
-      }
-    ],
     groupedRows: [],
-    columns: [
-      {
-        field: "customer",
-        headerName: "Customer"
-      },
-      {
-        field: "wintactic",
-        headerName: "Wintactic"
-      },
-      {
-        field: "status",
-        headerName: "Status"
-      },
-      {
-        field: "tags",
-        headerName: "Tags"
-      },
-      {
-        field: "action_date",
-        headerName: "Action Date"
-      },
-      {
-        field: "start_date",
-        headerName: "Start Date"
-      },
-      {
-        field: "end_date",
-        headerName: "End Date"
-      },
-      {
-        field: "strategy",
-        headerName: "Strategy"
-      },
-      {
-        field: "unread_comments",
-        headerName: "Unread Comments"
-      },
-      {
-        field: "total_comments",
-        headerName: "Total Comments"
-      }
-    ],
-    rearrangedColumns: [],
+    groupHeaderWidthUpdated: false,
     expandedGroups: [],
-    isGroupingActive: false,
-    isScrollingActive: false,
-    gridApi: Object,
+    isGroupingActive: false
   }),
 
   methods: {
-    startScrolling(event) {
-      if (event.button === 0) {
-        this.isScrollingActive = true;
-      }
+    initTable() {
+      this.groupedRows = [];
+      this.isGroupingActive = false;
     },
-    stopScrolling(event) {
-      if (event.button === 0) {
-        this.isScrollingActive = false
-      }
+    getVisibleColumns() {
+      return this.columns.filter(column => column.hidden === false);
     },
-    handleScrolling(node, column) {
-      if (this.isScrollingActive) {
-        // this.gridApi.ensureNodeVisible(node, 'middle');
-        this.gridApi.ensureColumnVisible(column, 'middle');
-      }
-    },
-    getGridOptions() {
-      return {
-        autoGroupColumnDef: {
-          minWidth: 200,
-        },
-        groupDisplayType: "groupRows",
-        columnDefs: [
-          {
-            field: "customer",
-            headerName: "Customer",
-            rowGroup: true
-          },
-          {
-            field: "wintactic",
-            headerName: "Wintactic"
-          },
-          {
-            field: "status",
-            headerName: "Status"
-          },
-          {
-            field: "tags",
-            headerName: "Tags"
-          },
-          {
-            field: "action_date",
-            headerName: "Action Date"
-          },
-          {
-            field: "start_date",
-            headerName: "Start Date"
-          },
-          {
-            field: "end_date",
-            headerName: "End Date"
-          },
-          {
-            field: "strategy",
-            headerName: "Strategy"
-          },
-          {
-            field: "unread_comments",
-            headerName: "Unread Comments"
-          },
-          {
-            field: "total_comments",
-            headerName: "Total Comments"
-          }
-        ],
-        rowData: [
-          {
-            "customer": "Acme Inc",
-            "wintactic": "3D Engage",
-            "status": "Review",
-            "tags": "#3D,#Manuf,#x-sell",
-            "action_date": "1-Jun-24",
-            "start_date": "1-Jan-24",
-            "end_date": "31-Dec-24",
-            "strategy": "Acquire New Logos",
-            "unread_comments": 0,
-            "total_comments": 0
-          },
-          {
-            "customer": "Acme Inc",
-            "wintactic": "Hyper-care Upsell",
-            "status": "Review",
-            "tags": "#service,#priority_3",
-            "action_date": "",
-            "start_date": "1-Jan-24",
-            "end_date": "31-Dec-24",
-            "strategy": "Expand Footprint",
-            "unread_comments": 0,
-            "total_comments": 0
-          },
-          {
-            "customer": "Acme Inc",
-            "wintactic": "Renew Support",
-            "status": "Dismiss",
-            "tags": "#service,#priority_2",
-            "action_date": "1-Feb-24",
-            "start_date": "1-Jan-24",
-            "end_date": "31-Dec-24",
-            "strategy": "Retain",
-            "unread_comments": 0,
-            "total_comments": 2
-          },
-          {
-            "customer": "Acme Inc",
-            "wintactic": "Tech Refresh Printers",
-            "status": "Pursue",
-            "tags": "#retain,#priority_1,#traditional",
-            "action_date": "",
-            "start_date": "1-Jan-24",
-            "end_date": "31-Dec-24",
-            "strategy": "Improve Customer Lifetime Value",
-            "unread_comments": 3,
-            "total_comments": 8
-          },
-          {
-            "customer": "Acme Inc",
-            "wintactic": "Transform aaS",
-            "status": "Review",
-            "tags": "#aas,#priority#2,#opex",
-            "action_date": "",
-            "start_date": "1-Jan-24",
-            "end_date": "31-Dec-24",
-            "strategy": "Pivot to aaS",
-            "unread_comments": 1,
-            "total_comments": 5
-          },
-          {
-            "customer": "Astral",
-            "wintactic": "Tech Refresh Printers",
-            "status": "Dismiss",
-            "tags": "#retain,#priority_1,#traditional",
-            "action_date": "",
-            "start_date": "1-Jan-24",
-            "end_date": "31-Dec-24",
-            "strategy": "Improve Customer Lifetime Value",
-            "unread_comments": 0,
-            "total_comments": 0
-          },
-          {
-            "customer": "Astral",
-            "wintactic": "Transform aaS",
-            "status": "Pursue",
-            "tags": "#aas,#priority#2,#opex",
-            "action_date": "",
-            "start_date": "1-Jan-24",
-            "end_date": "31-Dec-24",
-            "strategy": "Pivot to aaS",
-            "unread_comments": 0,
-            "total_comments": 0
-          },
-          {
-            "customer": "Apex Ventures",
-            "wintactic": "Tech Refresh Printers",
-            "status": "Review",
-            "tags": "#retain,#priority_1,#traditional",
-            "action_date": "1-Jun",
-            "start_date": "1-Jan-24",
-            "end_date": "31-Dec-24",
-            "strategy": "Improve Customer Lifetime Value",
-            "unread_comments": 0,
-            "total_comments": 1
-          },
-          {
-            "customer": "Apex Ventures",
-            "wintactic": "Transform aaS",
-            "status": "Review",
-            "tags": "#aas,#priority#2,#opex",
-            "action_date": "1-Jun",
-            "start_date": "1-Jan-24",
-            "end_date": "31-Dec-24",
-            "strategy": "Pivot to aaS",
-            "unread_comments": 0,
-            "total_comments": 0
-          },
-          {
-            "customer": "Celestial Synthetics",
-            "wintactic": "3D Engage",
-            "status": "Review",
-            "tags": "#3D,#Manuf,#x-sell",
-            "action_date": "1-Jun",
-            "start_date": "1-Jan-24",
-            "end_date": "31-Dec-24",
-            "strategy": "Acquire New Logos",
-            "unread_comments": 0,
-            "total_comments": 1
-          },
-          {
-            "customer": "Celestial Synthetics",
-            "wintactic": "Renew Support",
-            "status": "Review",
-            "tags": "#service,#priority_2",
-            "action_date": "",
-            "start_date": "1-Jan-24",
-            "end_date": "31-Dec-24",
-            "strategy": "Retain",
-            "unread_comments": 0,
-            "total_comments": 0
-          },
-          {
-            "customer": "Cosmo Catalyst",
-            "wintactic": "Hyper-care Upsell",
-            "status": "Review",
-            "tags": "#service,#priority_3",
-            "action_date": "",
-            "start_date": "1-Jan-24",
-            "end_date": "31-Dec-24",
-            "strategy": "Expand Footprint",
-            "unread_comments": 0,
-            "total_comments": 0
-          },
-          {
-            "customer": "CyberPulse",
-            "wintactic": "Renew Support",
-            "status": "Review",
-            "tags": "#service,#priority_2",
-            "action_date": "",
-            "start_date": "1-Jan-24",
-            "end_date": "31-Dec-24",
-            "strategy": "Retain",
-            "unread_comments": 0,
-            "total_comments": 0
-          },
-          {
-            "customer": "CyberPulse",
-            "wintactic": "Tech Refresh Printers",
-            "status": "Review",
-            "tags": "#retain,#priority_1,#traditional",
-            "action_date": "",
-            "start_date": "1-Jan-24",
-            "end_date": "31-Dec-24",
-            "strategy": "Improve Customer Lifetime Value",
-            "unread_comments": 1,
-            "total_comments": 2
-          },
-          {
-            "customer": "CyberPulse",
-            "wintactic": "Transform aaS",
-            "status": "Pursue",
-            "tags": "#aas,#priority#2,#opex",
-            "action_date": "",
-            "start_date": "1-Jan-24",
-            "end_date": "31-Dec-24",
-            "strategy": "Pivot to aaS",
-            "unread_comments": 0,
-            "total_comments": 0
-          },
-          {
-            "customer": "Elysian Echo Systems",
-            "wintactic": "3D Engage",
-            "status": "Dismiss",
-            "tags": "#3D,#Manuf,#x-sell",
-            "action_date": "",
-            "start_date": "1-Jan-24",
-            "end_date": "31-Dec-24",
-            "strategy": "Acquire New Logos",
-            "unread_comments": 0,
-            "total_comments": 1
-          },
-          {
-            "customer": "Elysian Echo Systems",
-            "wintactic": "Hyper-care Upsell",
-            "status": "Dismiss",
-            "tags": "#service,#priority_3",
-            "action_date": "",
-            "start_date": "1-Jan-24",
-            "end_date": "31-Dec-24",
-            "strategy": "Expand Footprint",
-            "unread_comments": 0,
-            "total_comments": 0
-          },
-          {
-            "customer": "Elysian Echo Systems",
-            "wintactic": "Transform aaS",
-            "status": "Dismiss",
-            "tags": "#aas,#priority#2,#opex",
-            "action_date": "",
-            "start_date": "1-Jan-24",
-            "end_date": "31-Dec-24",
-            "strategy": "Pivot to aaS",
-            "unread_comments": 0,
-            "total_comments": 0
-          }
-        ]
-        // onCellMouseDown: params => this.handleScrolling(params.node, params.column),
-        // onCellMouseOver: params => this.handleScrolling(params.node, params.column)
-      }
-    },
-    group(column) {
-      const index = this.rearrangedColumns.findIndex(obj => obj.headerName === column);
-      if (index >= 1) {
-        const [header] = this.rearrangedColumns.splice(index, 1);
-        this.rearrangedColumns.unshift(header);
-      }
-
-      this.regroup("status")
-      this.isGroupingActive = true;
-    },
-    regroup(field) {
+    groupByColumn(columnField) {
       const groupedData = {};
       this.rows.forEach(obj => {
-        const value = obj[field];
+        const value = obj[columnField];
         if (!groupedData[value]) {
           groupedData[value] = {
-            field: field,
+            field: columnField,
             value: value,
             count: 0,
             rows: []
@@ -641,6 +105,7 @@ export default {
       for (const value in groupedData) {
         this.groupedRows.push(groupedData[value]);
       }
+      this.isGroupingActive = true;
     },
     toggleExpandGroup(index) {
       const position = this.expandedGroups.indexOf(index);
@@ -659,8 +124,15 @@ export default {
 
 <style scoped>
 #table-content {
-  height: 600px;
+  /* Calculate high as 100vh minus headers, minus metrics, minus 3 margins */
+  height: calc(100vh - 100px - 226px - 55px - 40px - 40px - 40px);
+  width: 1150px;
   overflow-x: hidden;
+  background-color: #FFFAEB;
+}
+
+#table-content::-webkit-scrollbar {
+  display: none;
 }
 
 #table-component-header {
@@ -678,6 +150,10 @@ export default {
   align-items: center;
   justify-content: center;
   display: flex;
+}
+
+.table-component-header-cell:not(:last-child) {
+  border-right: 1px solid white;
 }
 
 .table-component-body-row {
@@ -708,6 +184,7 @@ export default {
   display: flex;
   cursor: pointer;
   border-bottom: 1px solid #D0D5DD;
+  user-select: none;
 }
 
 .table-component-group-text {
@@ -745,7 +222,6 @@ export default {
 }
 
 .table-component-group-rows {
-
 }
 
 .table-component-group-row {
@@ -765,30 +241,25 @@ export default {
   display: flex;
 }
 
-.ag-theme-quartz {
-  --ag-font-size: 15px;
-  --ag-font-family: Inter-Regular;
-
-  --ag-header-foreground-color: white;
-  --ag-header-background-color: #FE8325;
-  --ag-header-column-resize-handle-height: 100%;
-  --ag-header-column-resize-handle-width: 1px;
-  --ag-header-column-resize-handle-color: white;
-
-
-  --ag-borders: none;
-  --ag-row-border-style: none;
-  --ag-wrapper-border-radius: 0;
-  --ag-range-selection-border-color: transparent;
+.fade-leave-active {
+  transition: opacity 0.5s ease;
 }
 
-:deep .ag-body-horizontal-scroll-viewport {
-  /*overflow-x: hidden /* disable horizontal scroll bar */
+.fade-leave-to {
+  opacity: 0;
+  height: 0;
 }
 
-:deep .ag-body-vertical-scroll-viewport {
-  /*overflow-y: hidden /* disable vertical scroll bar */
+.fade-enter-active {
+  animation: fade-in 0.5s ease;
 }
 
-
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
 </style>

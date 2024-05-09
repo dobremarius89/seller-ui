@@ -25,7 +25,7 @@
                            @click="clickButton(2)"/>
       <table-header-button :text="'Column'"
                            :clicked="clickedHeaderButton === 3"
-                           @click="clickButton(3)"/>
+                           @click="openColumnConfiguration()"/>
       <table-header-button :text="'Clear Filter'"
                            :clicked="clickedHeaderButton === 4"
                            @click="clickButton(4)"/>
@@ -51,6 +51,10 @@ export default {
     clickButton(number) {
       this.clickedHeaderButton = number;
     },
+    openColumnConfiguration() {
+      this.clickedHeaderButton = 3;
+      this.$emit("openColumnConfiguration");
+    }
   }
 }
 </script>
@@ -60,9 +64,11 @@ export default {
   display: flex;
   background-color: white;
   border-radius: 30px 30px 0 0;
+  width: 1150px;
 }
 
-#table-tabs {}
+#table-tabs {
+}
 
 .table-tab {
   background-color: #FFF3E9;

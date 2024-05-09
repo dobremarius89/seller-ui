@@ -45,7 +45,7 @@ import HeaderCard from "@/components/HeaderCard.vue";
 export default defineComponent({
   components: {HeaderCard, HeaderButton},
 
-  mounted() {
+  beforeMount() {
     document.addEventListener('click', this.unClickButton);
   },
 
