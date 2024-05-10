@@ -48,6 +48,7 @@
 <script>
 import {dragscroll} from "vue-dragscroll";
 import {getGroupingColum} from "@/utils/table-utils"
+import eventBus from "@/config/emitter.config";
 
 export default {
   directives: {
@@ -79,6 +80,7 @@ export default {
       this.searchText = null;
     },
     closeColumnConfiguration() {
+      this.unClickColumnButton();
       this.initColumnConfiguration();
       this.$emit("closeColumnConfiguration");
     },
@@ -145,8 +147,12 @@ export default {
       return column.hidden;
     },
     applyColumnConfiguration() {
+      this.unClickColumnButton();
       this.$emit("applyColumnConfiguration", this.updatedColumns);
       this.closeColumnConfiguration();
+    },
+    unClickColumnButton() {
+      eventBus.emit("unClickColumnButton", "3");
     },
     filterColumn() {
       if (this.searchText) {

@@ -18,26 +18,39 @@
       <table-header-button :text="'Update'"
                            :has-arrows="true"
                            :clicked="clickedHeaderButton === 1"
-                           @click="clickButton(1)"/>
+                           @click="clickButton(1, $event)"/>
       <table-header-button :text="'Export'"
                            :src="require('@/assets/home/download.png')"
                            :clicked="clickedHeaderButton === 2"
-                           @click="clickButton(2)"/>
+                           @click="clickButton(2, $event)"/>
       <table-header-button :text="'Column'"
                            :clicked="clickedHeaderButton === 3"
                            @click="openColumnConfiguration()"/>
       <table-header-button :text="'Clear Filter'"
                            :clicked="clickedHeaderButton === 4"
-                           @click="clickButton(4)"/>
+                           @click="clickButton(4, $event)"/>
     </div>
   </div>
 </template>
 
 <script>
 import TableHeaderButton from "@/components/TableHeaderButton.vue";
+import eventBus from "@/config/emitter.config";
 
 export default {
   components: {TableHeaderButton},
+
+  beforeMount() {
+    document.addEventListener('click', this.unClickButtonOverListener);
+  },
+
+  mounted() {
+    eventBus.on("unClickColumnButton", this.unClickButtonOverBus);
+  },
+
+  beforeUnmount() {
+    eventBus.off("unClickColumnButton", this.unClickButtonOverBus);
+  },
 
   data: () => ({
     activeTab: 1,
@@ -52,9 +65,13 @@ export default {
       this.clickedHeaderButton = number;
       event.stopPropagation();
     },
-    unClickButton() {
+    unClickButtonOverBus() {
       this.clickedHeaderButton = 0;
-
+    },
+    unClickButtonOverListener() {
+      if (this.clickedHeaderButton !== 3) {
+        this.clickedHeaderButton = 0;
+      }
     },
     openColumnConfiguration() {
       this.clickedHeaderButton = 3;
