@@ -5,20 +5,37 @@
         <p id="configuration-title-text">Column</p>
       </div>
       <div id="configuration-search-bar">
-        <input id="configuration-search" placeholder="Search..."/>
+        <input id="configuration-search" v-model="searchText" placeholder="Search..." @input="filterColumn"/>
       </div>
       <div v-dragscroll.y id="configuration-rows">
-        <div v-for="(column, index) in updatedColumns" class="configuration-row" :key="index">
-          {{ column.name }}
-          <div class="configuration-row-images">
-            <img v-if="!isGroupingColumn(column)" class="image-group" src="../assets/column/ungroup.png" @click="groupColumn(column)">
-            <img v-if="isGroupingColumn(column)" class="image-group" src="../assets/column/group.png" @click="unGroupColumn(column)">
-            <img class="image-arrow" src="@/assets/common/arrow_up.png"  @click="shiftColumn(index, 'left')">
-            <img class="image-arrow" src="@/assets/common/arrow_down.png"  @click="shiftColumn(index, 'right')">
-            <img v-if="!isHidden(column)" class="image-show" src="@/assets/column/show.png" @click="hideColumn(column)">
-            <img v-if="isHidden(column)" class="image-show" src="@/assets/column/hide.png"  @click="showColumn(column)">
+        <transition-group name="flip-list" tag="div">
+          <div v-for="column in updatedColumns" :key="column.field">
+            <div v-if="column.filtered !== true"  class="configuration-row">
+              {{ column.name }}
+              <div class="configuration-row-images">
+                <img v-if="!isGroupingColumn(column)"
+                     class="image-group"
+                     src="../assets/column/ungroup.png"
+                     @click="groupColumn(column)">
+                <img v-if="isGroupingColumn(column)"
+                     class="image-group"
+                     src="../assets/column/group.png"
+                     @click="unGroupColumn(column)">
+                <img :class="{'image-disabled' : isGroupingColumn(column) || shouldDisableMovingUp(column)}"
+                     class="image-arrow" src="@/assets/common/arrow_up.png"
+                     @click="shiftColumn(column, 'left')">
+                <img :class="{'image-disabled' : isGroupingColumn(column) || shouldDisableMovingDown(column)}"
+                     class="image-arrow" src="@/assets/common/arrow_down.png"
+                     @click="shiftColumn(column, 'right')">
+                <img v-if="!isHidden(column)"
+                     :class="{'image-disabled' : isGroupingColumn(column)}"
+                     class="image-show" src="@/assets/column/show.png"
+                     @click="hideColumn(column)">
+                <img v-if="isHidden(column)" class="image-show" src="@/assets/column/hide.png" @click="showColumn(column)">
+              </div>
+            </div>
           </div>
-        </div>
+        </transition-group>
       </div>
       <div id="configuration-buttons">
         <button id="button-cancel" @click="closeColumnConfiguration()">Cancel</button>
@@ -48,6 +65,7 @@ export default {
 
   data: () => ({
     groupingColumn: String,
+    searchText: null,
     hiddenColumns: [],
     updatedColumns: []
   }),
@@ -58,6 +76,7 @@ export default {
       this.hiddenColumns = this.columns.filter(column => column.hidden === true)
           .map(column => column.field);
       this.updatedColumns = JSON.parse(JSON.stringify(this.columns));
+      this.searchText = null;
     },
     closeColumnConfiguration() {
       this.initColumnConfiguration();
@@ -70,7 +89,15 @@ export default {
       this.updatedColumns.forEach(column => column.grouping = false);
       this.groupingColumn = column.field;
       column.grouping = true;
+      this.showColumn(column)
       this.moveGroupingColumnFirst();
+      this.scrollToFirstColumn();
+    },
+    scrollToFirstColumn() {
+      const configurationRows = document.getElementById("configuration-rows");
+      if (configurationRows) {
+        configurationRows.scrollTop = 0;
+      }
     },
     unGroupColumn(column) {
       this.groupingColumn = null;
@@ -83,17 +110,25 @@ export default {
         this.updatedColumns.unshift(header);
       }
     },
-    shiftColumn(columnIndex, position) {
-      if (position === "left" && columnIndex === 0) {
-        return;
+    shiftColumn(column, position) {
+      const index = this.updatedColumns.findIndex(col => col.field === column.field);
+      const adjacentIndex = position === "left" ? index - 1 : index + 1;
+      const temp = this.updatedColumns[index];
+      this.updatedColumns[index] = JSON.parse(JSON.stringify(this.updatedColumns[adjacentIndex]));
+      this.updatedColumns[adjacentIndex] = JSON.parse(JSON.stringify(temp));
+    },
+    shouldDisableMovingUp(column) {
+      const index = this.updatedColumns.findIndex(col => col.field === column.field);
+      if (index === 0) {
+        return true;
+      } else if (index === 1 && this.updatedColumns[0].grouping === true) {
+        return true;
       }
-      if (position === "right" && columnIndex === this.updatedColumns.length - 1) {
-        return;
-      }
-      const adjacentIndex = position === "left" ? columnIndex - 1 : columnIndex + 1;
-      const temp = this.updatedColumns[columnIndex];
-      this.updatedColumns[columnIndex] = this.updatedColumns[adjacentIndex];
-      this.updatedColumns[adjacentIndex] = temp;
+      return false;
+    },
+    shouldDisableMovingDown(column) {
+      const index = this.updatedColumns.findIndex(col => col.field === column.field);
+      return index === this.updatedColumns.length - 1;
     },
     hideColumn(column) {
       this.hiddenColumns.push(column.field);
@@ -111,6 +146,16 @@ export default {
     },
     applyColumnConfiguration() {
       this.$emit("applyColumnConfiguration", this.updatedColumns);
+      this.closeColumnConfiguration();
+    },
+    filterColumn() {
+      if (this.searchText) {
+        this.updatedColumns.forEach(column => {
+          column.filtered = !column.field.toLocaleLowerCase().startsWith(this.searchText.toLowerCase());
+        });
+      } else {
+        this.updatedColumns.forEach(column => column.filtered = false);
+      }
     }
   }
 }
@@ -164,20 +209,22 @@ export default {
 }
 
 #configuration-search {
-  margin-left: 20px;
+  margin: 0 20px 0 20px;
   border: none;
   background-color: #E4E4E4;
   outline: none;
   font-family: Inter-Regular, serif;
   font-size: 16px;
+  width: 100%;
 }
 
 #configuration-rows {
   margin: 15px 20px 0 20px;
   border: 1px solid #D0D5DD;
   border-radius: 20px;
-  max-height: 200px;
+  height: 200px;
   overflow-y: scroll;
+  user-select: none;
 }
 
 #configuration-rows::-webkit-scrollbar {
@@ -241,10 +288,19 @@ export default {
   cursor: pointer;
 }
 
+.image-disabled {
+  opacity: 0.25;
+  cursor: default;
+  pointer-events: none;
+}
 
 .image-show {
   width: 20px;
   margin-right: 20px;
   cursor: pointer;
+}
+
+.flip-list-move {
+  transition: transform 0.25s;
 }
 </style>

@@ -38,11 +38,11 @@ export default {
 }
 
 .clicked {
-  background-color: green;
+  background-color: lightgray;
 }
 
 .unClicked:hover {
-  background-color: red;
+  background-color: lightgray;
 }
 
 .image {

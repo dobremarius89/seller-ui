@@ -48,8 +48,13 @@ export default {
     changeTab(tabNumber) {
       this.activeTab = tabNumber;
     },
-    clickButton(number) {
+    clickButton(number, event) {
       this.clickedHeaderButton = number;
+      event.stopPropagation();
+    },
+    unClickButton() {
+      this.clickedHeaderButton = 0;
+
     },
     openColumnConfiguration() {
       this.clickedHeaderButton = 3;

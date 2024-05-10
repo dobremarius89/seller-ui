@@ -13,7 +13,7 @@
         <table-component :columns="columns" :rows="rows"/>
         <column-configuration :columns="columns"
                               :isColumnConfigurationOpened="isColumnConfigurationOpened"
-                              @closeColumnConfiguration="closeColumnConfiguration()"
+                              @closeColumnConfiguration="closeColumnConfiguration"
                               @applyColumnConfiguration="applyColumnConfiguration"/>
       </div>
     </div>
