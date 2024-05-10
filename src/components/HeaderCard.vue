@@ -6,16 +6,16 @@
     <div class="card-elements">
       <div v-for="(topic, index) in getTopicNames(topics)" :key="index">
         <transition name="fade">
-        <a v-if="isMainTopic(topic) || isMainTopicSelected(topic)"
-           :class="{'sub-topic' : isSubTopic(topic), 'card-element' : isMainTopic(topic)}"
-           :href="getTopicUrl(topics, topic)"
-           @click="expandSubTopic(topics, topic, $event)">
-          <span>{{ getTopicOrSubTopicName(topic) }}</span>
-          <img v-if="hasSubTopics(topics, topic)"
-               :class="{'card-element-arrow-up' : isMainTopicSelected(topic)}"
-               class="card-element-arrow"
-               src="@/assets/home/arrow-left.png"/>
-        </a>
+          <a v-if="isMainTopic(topic) || isMainTopicSelected(topic)"
+             :class="{'sub-topic' : isSubTopic(topic), 'card-element' : isMainTopic(topic)}"
+             :href="getTopicUrl(topics, topic)"
+             @click="expandSubTopic(topics, topic, $event)">
+            <span>{{ getTopicOrSubTopicName(topic) }}</span>
+            <img v-if="hasSubTopics(topics, topic)"
+                 :class="{'card-element-arrow-up' : isMainTopicSelected(topic)}"
+                 class="card-element-arrow"
+                 src="@/assets/home/arrow-left.png"/>
+          </a>
         </transition>
       </div>
     </div>

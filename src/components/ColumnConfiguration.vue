@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isColumnConfigurationOpened" id="configuration-modal">
+  <div id="configuration-modal">
     <div id="configuration">
       <div id="configuration-title">
         <p id="configuration-title-text">Column</p>
@@ -60,7 +60,6 @@ export default {
   },
 
   props: {
-    isColumnConfigurationOpened: Boolean,
     columns: Object
   },
 
@@ -174,7 +173,7 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.25);
+  background-color: rgba(0, 0, 0, 0.75);
   z-index: 1;
 }
 

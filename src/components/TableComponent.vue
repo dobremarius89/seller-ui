@@ -1,6 +1,5 @@
 <template>
   <div v-dragscroll.x id="table-content">
-    <button style="display: none; height: 50px; width: 50px" @click="group('Status')"/>
     <div id="table-component-header">
       <div v-for="(column, index) in getVisibleColumns(columns)" class="table-component-header-cell" :key="index">
         {{ column.name }}

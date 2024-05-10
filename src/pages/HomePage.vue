@@ -11,7 +11,8 @@
       <div id="tables-container">
         <table-header @openColumnConfiguration="openColumnConfiguration()"/>
         <table-component :columns="columns" :rows="rows"/>
-        <column-configuration :columns="columns"
+        <column-configuration v-if="isColumnConfigurationOpened"
+                              :columns="columns"
                               :isColumnConfigurationOpened="isColumnConfigurationOpened"
                               @closeColumnConfiguration="closeColumnConfiguration"
                               @applyColumnConfiguration="applyColumnConfiguration"/>
