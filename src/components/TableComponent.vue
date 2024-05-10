@@ -126,7 +126,9 @@ export default {
 #table-content {
   /* Calculate high as 100vh minus headers, minus metrics, minus 3 margins */
   height: calc(100vh - 100px - 226px - 55px - 40px - 40px - 40px);
-  width: 1150px;
+  /* Table's width should match the left margin of header's search bar */
+  /* Calculate width as 60%* of total width, including left margin */
+  width: calc((100% + 2 * 60px) * 0.6);
   overflow-x: hidden;
   background-color: #FFFAEB;
 }

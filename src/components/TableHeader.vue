@@ -86,7 +86,8 @@ export default {
   display: flex;
   background-color: white;
   border-radius: 30px 30px 0 0;
-  width: 1150px;
+  /* Table's header width should match width of the table */
+  width: calc((100% + 2 * 60px) * 0.6);
 }
 
 #table-tabs {

@@ -1,9 +1,11 @@
 <template>
   <div id="header-content">
-    <img id="logo-image" src="@/assets/logo.png"/>
-    <div id="search-bar">
-      <img id="search-image" src="@/assets/home/search.png"/>
-      <input id="search-input" placeholder="Search"/>
+    <div id="logo-search-bar">
+      <img id="logo-image" src="@/assets/logo.png"/>
+      <div id="search-bar">
+        <img id="search-image" src="@/assets/home/search.png"/>
+        <input id="search-input" placeholder="Search"/>
+      </div>
     </div>
     <div id="buttons">
       <div style="position: relative; display: inline-block;">
@@ -97,13 +99,16 @@ export default defineComponent({
   background-color: white;
 }
 
-#logo-image {
+#logo-search-bar {
   margin-left: 32px;
+  display: flex;
+  /* Align the logo and search bar with table */
+  /* 60% of the allowed width, adding table's left margin and subtracting logo's left margin */
+  width: calc(60% + 60px - 32px);
 }
 
 #search-bar {
-  /* can occupy max 65% of width, minus logo, minus search-bar, minus left and right marin */
-  margin-left: calc(65% - 338px - 550px - 2 * 32px);
+  margin-left: auto;
   height: 55px;
   width: 550px;
   border: 1px solid #D0D5DD;
@@ -117,7 +122,8 @@ export default defineComponent({
 }
 
 #search-input {
-  margin-left: 24px;
+  margin: 0 24px 0 24px;
+  width: 100%;
   font-family: Inter-Regular, serif;
   font-size: 18px;
   color: #969696;
