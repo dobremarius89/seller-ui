@@ -1,8 +1,22 @@
 <template>
   <div v-dragscroll.x id="table-content">
     <div id="table-component-header">
-      <div v-for="(column, index) in getVisibleColumns(columns)" class="table-component-header-cell" :key="index">
-        {{ column.name }}
+      <div v-for="column in getVisibleColumns(columns)"
+           class="table-component-header-cell"
+           :key="column.field"
+           @mouseenter="showColumnFunctions(column)"
+           @mouseleave="hideColumnFunctions(column)">
+        <div></div>
+        <div :class="{'table-header-text-animation' : shouldShowFunctions(column)}" class="table-component-header-text">
+          <span>{{ column.name }}</span>
+          <img v-if="true" class="table-header-sort-image" src="@/assets/table/arrow_down.png"/>
+        </div>
+        <transition name="show-hide">
+          <div v-if="shouldShowFunctions(column)"
+               class="table-header-filter-image">
+            <img src="@/assets/table/filter.png"/>
+          </div>
+        </transition>
       </div>
     </div>
     <div v-for="(group, groupIndex) in groupedRows" class="table-component-group" :key="groupIndex">
@@ -16,7 +30,7 @@
       <transition name="fade">
         <div v-if="isExpanded(groupIndex)" class="table-component-group-rows">
           <div v-for="(row, index) in group.rows" class="table-component-group-row" :key="index">
-            <div v-for="(column, index) in getVisibleColumns(columns)" class="table-component-group-cell" :key="index">
+            <div v-for="column in getVisibleColumns(columns)" class="table-component-group-cell" :key="column.field">
               {{ row[column.field] }}
             </div>
           </div>
@@ -25,7 +39,7 @@
     </div>
     <div v-if="!isGroupingActive" id="table-component-body">
       <div v-for="(row, index) in rows" class="table-component-body-row" :key="index">
-        <div v-for="(column, index) in getVisibleColumns(columns)" class="table-component-body-cell" :key="index">
+        <div v-for="column in getVisibleColumns(columns)" class="table-component-body-cell" :key="column.field">
           {{ row[column.field] }}
         </div>
       </div>
@@ -75,7 +89,8 @@ export default {
     groupedRows: [],
     groupHeaderWidthUpdated: false,
     expandedGroups: [],
-    isGroupingActive: false
+    isGroupingActive: false,
+    shownColumFunctions: null,
   }),
 
   methods: {
@@ -116,6 +131,18 @@ export default {
     },
     isExpanded(index) {
       return this.expandedGroups.indexOf(index) !== -1;
+    },
+    showColumnFunctions(column) {
+      // const value = this.getDeltaHeaderTextWidth(column);
+      // this.setDynamicTranslateX(column, value);
+      this.shownColumFunctions = column.field;
+    },
+    hideColumnFunctions(column) {
+      // this.setDynamicTranslateX(column, 0);
+      this.shownColumFunctions = null;
+    },
+    shouldShowFunctions(column) {
+      return this.shownColumFunctions === column.field;
     }
   }
 }
@@ -148,13 +175,47 @@ export default {
   font-family: Inter-Regular, serif;
   font-size: 16px;
   color: white;
-  align-items: center;
-  justify-content: center;
-  display: flex;
+  display: grid;
+  grid-template-columns: 30px 140px 30px;
+  grid-gap: 0;
 }
 
 .table-component-header-cell:not(:last-child) {
   border-right: 1px solid white;
+}
+
+.table-component-header-text {
+  transition: transform 0.5s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  max-width:140px;
+  text-align: center;
+}
+
+.table-header-text-animation {
+  transform: translateX(-40px);
+}
+
+.table-header-sort-image {
+  margin-left: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.table-header-filter-image {
+  /* Adjust margins from grid */
+  margin-right: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.table-header-filter-image img {
+  width: 21px;
+  height: 22px;
 }
 
 .table-component-body-row {
@@ -240,6 +301,18 @@ export default {
   align-items: center;
   justify-content: center;
   display: flex;
+}
+
+.show-hide-enter-active {
+  animation: fade-in 0.25s ease;
+}
+
+.show-hide-leave-to {
+  opacity: 0;
+}
+
+.show-hide-leave-active {
+  transition: opacity 0.25s ease;
 }
 
 .fade-leave-active {
