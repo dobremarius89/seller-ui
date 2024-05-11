@@ -1,18 +1,18 @@
 <template>
   <div v-dragscroll.x id="table-content">
     <div id="table-component-header">
-      <div v-for="column in getVisibleColumns(columns)"
+      <div v-for="column in visibleColumns"
            class="table-component-header-cell"
            :key="column.field"
-           @mouseenter="showColumnFunctions(column)"
-           @mouseleave="hideColumnFunctions(column)">
+           @mouseenter="showColumnFilter(column)"
+           @mouseleave="hideColumnFilter(column)">
         <div></div>
-        <div :class="{'table-header-text-animation' : shouldShowFunctions(column)}" class="table-component-header-text">
+        <div :class="{'table-header-text-animation' : shouldShowFilter(column)}" class="table-component-header-text">
           <span>{{ column.name }}</span>
           <img v-if="true" class="table-header-sort-image" src="@/assets/table/arrow_down.png"/>
         </div>
-        <transition name="show-hide">
-          <div v-if="shouldShowFunctions(column)"
+        <transition name="fade-filter">
+          <div v-if="shouldShowFilter(column)"
                class="table-header-filter-image">
             <img src="@/assets/table/filter.png"/>
           </div>
@@ -30,7 +30,7 @@
       <transition name="fade">
         <div v-if="isExpanded(groupIndex)" class="table-component-group-rows">
           <div v-for="(row, index) in group.rows" class="table-component-group-row" :key="index">
-            <div v-for="column in getVisibleColumns(columns)" class="table-component-group-cell" :key="column.field">
+            <div v-for="column in visibleColumns" class="table-component-group-cell" :key="column.field">
               {{ row[column.field] }}
             </div>
           </div>
@@ -38,8 +38,8 @@
       </transition>
     </div>
     <div v-if="!isGroupingActive" id="table-component-body">
-      <div v-for="(row, index) in rows" class="table-component-body-row" :key="index">
-        <div v-for="column in getVisibleColumns(columns)" class="table-component-body-cell" :key="column.field">
+      <div v-for="(row, index) in sortedRows" class="table-component-body-row" :key="index">
+        <div v-for="column in visibleColumns" class="table-component-body-cell" :key="column.field">
           {{ row[column.field] }}
         </div>
       </div>
@@ -90,16 +90,19 @@ export default {
     groupHeaderWidthUpdated: false,
     expandedGroups: [],
     isGroupingActive: false,
-    shownColumFunctions: null,
+    shownColumFilter: null,
   }),
+
+  computed: {
+    visibleColumns() {
+      return this.columns.filter(column => column.hidden === false);
+    },
+  },
 
   methods: {
     initTable() {
       this.groupedRows = [];
       this.isGroupingActive = false;
-    },
-    getVisibleColumns() {
-      return this.columns.filter(column => column.hidden === false);
     },
     groupByColumn(columnField) {
       const groupedData = {};
@@ -132,17 +135,15 @@ export default {
     isExpanded(index) {
       return this.expandedGroups.indexOf(index) !== -1;
     },
-    showColumnFunctions(column) {
-      // const value = this.getDeltaHeaderTextWidth(column);
-      // this.setDynamicTranslateX(column, value);
-      this.shownColumFunctions = column.field;
+    showColumnFilter(column) {
+      this.shownColumFilter = column.field;
     },
-    hideColumnFunctions(column) {
-      // this.setDynamicTranslateX(column, 0);
-      this.shownColumFunctions = null;
+    hideColumnFilter() {
+      this.shownColumFilter = null;
     },
-    shouldShowFunctions(column) {
-      return this.shownColumFunctions === column.field;
+    shouldShowFilter(column) {
+      // return true;
+      return this.shownColumFilter === column.field;
     }
   }
 }
@@ -176,7 +177,7 @@ export default {
   font-size: 16px;
   color: white;
   display: grid;
-  grid-template-columns: 30px 140px 30px;
+  grid-template-columns: 40px 120px 40px;
   grid-gap: 0;
 }
 
@@ -189,13 +190,12 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-
-  max-width:140px;
+  max-width: 120px;
   text-align: center;
 }
 
 .table-header-text-animation {
-  transform: translateX(-40px);
+  transform: translateX(-30px);
 }
 
 .table-header-sort-image {
@@ -303,15 +303,15 @@ export default {
   display: flex;
 }
 
-.show-hide-enter-active {
+.fade-filter-enter-active {
   animation: fade-in 0.25s ease;
 }
 
-.show-hide-leave-to {
+.fade-filter-leave-to {
   opacity: 0;
 }
 
-.show-hide-leave-active {
+.fade-filter-leave-active {
   transition: opacity 0.25s ease;
 }
 
