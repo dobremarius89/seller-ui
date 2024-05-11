@@ -4,16 +4,17 @@
       <div v-for="column in visibleColumns"
            class="table-component-header-cell"
            :key="column.field"
+           @click="sort(column)"
            @mouseenter="showColumnFilter(column)"
            @mouseleave="hideColumnFilter(column)">
-        <div></div>
+        <div><!-- keep this empty because it is the first column in the grid --></div>
         <div :class="{'table-header-text-animation' : shouldShowFilter(column)}" class="table-component-header-text">
           <span>{{ column.name }}</span>
-          <img v-if="true" class="table-header-sort-image" src="@/assets/table/arrow_down.png"/>
+          <img v-if="isSortedAsc(column)" class="table-header-sort-image" src="@/assets/table/arrow_down.png"/>
+          <img v-if="isSortedDesc(column)" class="table-header-sort-image" src="@/assets/table/arrow_up.png"/>
         </div>
         <transition name="fade-filter">
-          <div v-if="shouldShowFilter(column)"
-               class="table-header-filter-image">
+          <div v-if="shouldShowFilter(column)" class="table-header-filter-image" @click="filter($event)">
             <img src="@/assets/table/filter.png"/>
           </div>
         </transition>
@@ -24,7 +25,8 @@
         <div class="table-component-group-name">
           <div class="table-component-group-text">{{ group.value }}</div>
           <div class="table-component-group-count">{{ group.count }}</div>
-          <img :class="{'table-component-group-arrow-up' : isExpanded(groupIndex)}" class="table-component-group-arrow" src="@/assets/home/arrow_down.png"/>
+          <img :class="{'table-component-group-arrow-up' : isExpanded(groupIndex)}" class="table-component-group-arrow"
+               src="@/assets/home/arrow_down.png"/>
         </div>
       </div>
       <transition name="fade">
@@ -54,6 +56,10 @@ import {getGroupingColum} from "@/utils/table-utils";
 export default {
   directives: {
     dragscroll
+  },
+
+  beforeMount() {
+    this.sortedRows = JSON.parse(JSON.stringify(this.rows));
   },
 
   updated() {
@@ -87,10 +93,15 @@ export default {
 
   data: () => ({
     groupedRows: [],
+    sortedRows: [],
     groupHeaderWidthUpdated: false,
     expandedGroups: [],
     isGroupingActive: false,
     shownColumFilter: null,
+    sortingColumn: {
+      column: null,
+      sorting: null
+    }
   }),
 
   computed: {
@@ -142,8 +153,47 @@ export default {
       this.shownColumFilter = null;
     },
     shouldShowFilter(column) {
-      // return true;
       return this.shownColumFilter === column.field;
+    },
+    isSortedAsc(column) {
+      if (this.sortingColumn.column === column.field) {
+        return this.sortingColumn.sorting === "asc";
+      } else {
+        return false;
+      }
+    },
+    isSortedDesc(column) {
+      if (this.sortingColumn.column === column.field) {
+        return this.sortingColumn.sorting === "desc";
+      } else {
+        return false;
+      }
+    },
+    sort(column) {
+      if (this.sortingColumn.column === column.field) {
+        if (this.sortingColumn.sorting === "asc") {
+          this.sortingColumn.sorting = "desc";
+        } else {
+          this.sortingColumn.sorting = "asc"
+        }
+      } else {
+        this.sortingColumn.sorting = "asc";
+      }
+      this.sortingColumn.column = column.field;
+
+      return this.sortedRows.sort((first, second) => {
+        const firstValue = first[this.sortingColumn.column];
+        const secondValue = second[this.sortingColumn.column];
+        if (this.sortingColumn.sorting === "asc") {
+          return firstValue < secondValue ? -1 : (firstValue > secondValue ? 1 : 0);
+        } else {
+          return firstValue > secondValue ? -1 : (firstValue < secondValue ? 1 : 0);
+        }
+      });
+    },
+    filter(event) {
+      alert("filter");
+      event.stopPropagation();
     }
   }
 }
@@ -179,6 +229,7 @@ export default {
   display: grid;
   grid-template-columns: 40px 120px 40px;
   grid-gap: 0;
+  cursor: pointer;
 }
 
 .table-component-header-cell:not(:last-child) {
@@ -211,6 +262,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
+  cursor: pointer;
 }
 
 .table-header-filter-image img {
