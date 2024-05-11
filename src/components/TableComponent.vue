@@ -10,10 +10,13 @@
         <div><!-- keep this empty because it is the first column in the grid --></div>
         <div :class="{'table-header-text-animation' : shouldShowFilter(column)}" class="table-component-header-text">
           <span>{{ column.name }}</span>
-          <img v-if="isSortedAsc(column)" class="table-header-sort-image" src="@/assets/table/arrow_down.png"/>
-          <img v-if="isSortedDesc(column)" class="table-header-sort-image" src="@/assets/table/arrow_up.png"/>
+          <transition name="fade-in-out">
+          <img v-if="isSortedAsc(column) || isSortedDesc(column)"
+               :class="{'table-header-sort-animation' : isSortedAsc(column)}"
+               class="table-header-sort-image" src="@/assets/table/arrow_up.png"/>
+          </transition>
         </div>
-        <transition name="fade-filter">
+        <transition name="fade-in-out">
           <div v-if="shouldShowFilter(column)" class="table-header-filter-image" @click="filter($event)">
             <img src="@/assets/table/filter.png"/>
           </div>
@@ -40,11 +43,13 @@
       </transition>
     </div>
     <div v-if="!isGroupingActive" id="table-component-body">
-      <div v-for="(row, index) in sortedRows" class="table-component-body-row" :key="index">
-        <div v-for="column in visibleColumns" class="table-component-body-cell" :key="column.field">
-          {{ row[column.field] }}
+      <transition-group name="flip-list" tag="div">
+        <div v-for="row in sortedRows" class="table-component-body-row" :key="row.customer + row.wintactic">
+          <div v-for="column in visibleColumns" class="table-component-body-cell" :key="column.field">
+            {{ row[column.field] }}
+          </div>
         </div>
-      </div>
+      </transition-group>
     </div>
   </div>
 </template>
@@ -256,8 +261,20 @@ export default {
   align-items: center;
 }
 
+.table-header-sort-image {
+  margin-left: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.5s ease;
+}
+
+.table-header-sort-animation {
+  transform: rotate(180deg);
+}
+
 .table-header-filter-image {
-  /* Adjust margins from grid */
+  /* Adjust margins from grid directly, not in this class */
   margin-right: auto;
   display: flex;
   justify-content: center;
@@ -355,15 +372,15 @@ export default {
   display: flex;
 }
 
-.fade-filter-enter-active {
+.fade-in-out-enter-active {
   animation: fade-in 0.25s ease;
 }
 
-.fade-filter-leave-to {
+.fade-in-out-leave-to {
   opacity: 0;
 }
 
-.fade-filter-leave-active {
+.fade-in-out-leave-active {
   transition: opacity 0.25s ease;
 }
 
@@ -378,6 +395,10 @@ export default {
 
 .fade-enter-active {
   animation: fade-in 0.5s ease;
+}
+
+.flip-list-move {
+  transition: transform 0.25s;
 }
 
 @keyframes fade-in {
