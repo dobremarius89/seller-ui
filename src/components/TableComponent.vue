@@ -7,13 +7,14 @@
            @click="sort(column)"
            @mouseenter="showColumnFilter(column)"
            @mouseleave="hideColumnFilter(column)">
-        <div><!-- keep this empty because it is the first column in the grid --></div>
         <div :class="{'table-header-text-animation' : shouldShowFilter(column)}" class="table-component-header-text">
           <span>{{ column.name }}</span>
+        </div>
+        <div :class="{'table-header-sort-animation-move' : shouldShowFilter(column)}" class="table-header-sort-image">
           <transition name="fade-in-out">
-          <img v-if="isSortedAsc(column) || isSortedDesc(column)"
-               :class="{'table-header-sort-animation' : isSortedAsc(column)}"
-               class="table-header-sort-image" src="@/assets/table/arrow_up.png"/>
+            <img :class="{'table-header-sort-animation-rotate' : isSortedAsc(column)}"
+                 :style="{opacity: isSortedAsc(column) || isSortedDesc(column) ? '1' : '0'}"
+                 src="@/assets/table/arrow_up.png"/>
           </transition>
         </div>
         <transition name="fade-in-out">
@@ -232,7 +233,7 @@ export default {
   font-size: 16px;
   color: white;
   display: grid;
-  grid-template-columns: 40px 120px 40px;
+  grid-template-columns: 1fr 25px 30px;
   grid-gap: 0;
   cursor: pointer;
 }
@@ -246,7 +247,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  max-width: 120px;
+  margin-left: 40px;
   text-align: center;
 }
 
@@ -255,21 +256,21 @@ export default {
 }
 
 .table-header-sort-image {
-  margin-left: 5px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.table-header-sort-image {
-  margin-left: 5px;
   display: flex;
   justify-content: center;
   align-items: center;
   transition: transform 0.5s ease;
 }
 
-.table-header-sort-animation {
+.table-header-sort-image img {
+  transition: all 0.5s ease;
+}
+
+.table-header-sort-animation-move {
+  transform: translateX(-30px);
+}
+
+.table-header-sort-animation-rotate {
   transform: rotate(180deg);
 }
 
@@ -373,7 +374,7 @@ export default {
 }
 
 .fade-in-out-enter-active {
-  animation: fade-in 0.25s ease;
+  animation: fade-in 0.5s ease;
 }
 
 .fade-in-out-leave-to {
@@ -381,7 +382,7 @@ export default {
 }
 
 .fade-in-out-leave-active {
-  transition: opacity 0.25s ease;
+  transition: opacity 0.5s ease;
 }
 
 .fade-leave-active {
@@ -398,7 +399,7 @@ export default {
 }
 
 .flip-list-move {
-  transition: transform 0.25s;
+  transition: transform 0.5s;
 }
 
 @keyframes fade-in {
