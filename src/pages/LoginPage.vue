@@ -57,6 +57,7 @@ export default {
   margin: 0 auto;
   width: 1920px;
   height: 100vh;
+  background-color: white;
 }
 
 #content {

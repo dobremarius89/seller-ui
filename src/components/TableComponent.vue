@@ -18,7 +18,7 @@
           </transition>
         </div>
         <transition name="fade-in-out">
-          <div v-if="shouldShowFilter(column)" class="table-header-filter-image" @click="filter($event)">
+          <div v-if="shouldShowFilter(column)" class="table-header-filter-image" @click="openFilter(column, $event)">
             <img src="@/assets/table/filter.png"/>
           </div>
         </transition>
@@ -107,7 +107,8 @@ export default {
     sortingColumn: {
       column: null,
       sorting: null
-    }
+    },
+    filterColumns: [],
   }),
 
   computed: {
@@ -197,9 +198,20 @@ export default {
         }
       });
     },
-    filter(event) {
-      alert("filter");
+    openFilter(column, event) {
+      const index = this.filterColumns.findIndex(col => col.field === column.field);
+      if (index === -1) {
+        this.filterColumns.push({
+          column: column.field,
+          values: this.getDistinctValues(column)
+        })
+      }
+      console.log(this.filterColumns);
+      this.$emit("openFilterConfiguration", this.filterColumns);
       event.stopPropagation();
+    },
+    getDistinctValues(column) {
+      return [...new Set(this.sortedRows.map(row => row[column.field]))];
     }
   }
 }

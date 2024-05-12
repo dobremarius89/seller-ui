@@ -9,13 +9,18 @@
         <engagement-card/>
       </div>
       <div id="tables-container">
-        <table-header @openColumnConfiguration="openColumnConfiguration()"/>
-        <table-component :columns="columns" :rows="rows"/>
+        <table-header @openColumnConfiguration="openColumnConfiguration"/>
+        <table-component :columns="columns"
+                         :rows="rows"
+                         @openFilterConfiguration="openFilterConfiguration"/>
         <column-configuration v-if="isColumnConfigurationOpened"
                               :columns="columns"
                               :isColumnConfigurationOpened="isColumnConfigurationOpened"
                               @closeColumnConfiguration="closeColumnConfiguration"
                               @applyColumnConfiguration="applyColumnConfiguration"/>
+        <filter-configuration v-if="isFilterConfigurationOpened"
+                              :filterColumns="filterColumns"
+                              @closeFilterConfiguration="closeFilterConfiguration"/>
       </div>
     </div>
   </div>
@@ -29,9 +34,11 @@ import StrategyCard from "@/components/MetricCard.vue";
 import TableComponent from "@/components/TableComponent.vue";
 import TableHeader from "@/components/TableHeader.vue";
 import ColumnConfiguration from "@/components/ColumnConfiguration.vue";
+import FilterConfiguration from "@/components/FilterConfiguration.vue";
 
 export default {
   components: {
+    FilterConfiguration,
     ColumnConfiguration,
     TableHeader, TableComponent, StrategyCard, EngagementCard, HeaderComponent, UpcomingCard},
 
@@ -274,6 +281,18 @@ export default {
         hidden: false
       },
       {
+        field: "unread_comments",
+        name: "Unread Comments",
+        grouping: false,
+        hidden: false
+      },
+      {
+        field: "total_comments",
+        name: "Total Comments",
+        grouping: false,
+        hidden: false
+      },
+      {
         field: "tags",
         name: "Tags",
         grouping: false,
@@ -302,21 +321,11 @@ export default {
         name: "Strategy",
         grouping: false,
         hidden: false
-      },
-      {
-        field: "unread_comments",
-        name: "Unread Comments",
-        grouping: false,
-        hidden: false
-      },
-      {
-        field: "total_comments",
-        name: "Total Comments",
-        grouping: false,
-        hidden: false
       }
     ],
-    isColumnConfigurationOpened: false
+    filterColumns: [],
+    isColumnConfigurationOpened: false,
+    isFilterConfigurationOpened: false
   }),
 
   methods: {
@@ -325,6 +334,13 @@ export default {
     },
     closeColumnConfiguration() {
       this.isColumnConfigurationOpened = false;
+    },
+    openFilterConfiguration(filterColumns) {
+      this.filterColumns = filterColumns;
+      this.isFilterConfigurationOpened = true;
+    },
+    closeFilterConfiguration() {
+      this.isFilterConfigurationOpened = false;
     },
     applyColumnConfiguration(updatedColumns) {
       this.columns = JSON.parse(JSON.stringify(updatedColumns));
@@ -349,6 +365,5 @@ export default {
 
 #tables-container {
   margin: 40px 60px 0 60px;
-  background-color: #4B465C;
 }
 </style>

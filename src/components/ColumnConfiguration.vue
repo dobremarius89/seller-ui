@@ -38,8 +38,8 @@
         </transition-group>
       </div>
       <div id="configuration-buttons">
-        <button id="button-cancel" @click="closeColumnConfiguration()">Cancel</button>
-        <button id="button-apply" @click="applyColumnConfiguration()">Apply</button>
+        <button id="button-cancel" @click="closeColumnConfiguration">Cancel</button>
+        <button id="button-apply" @click="applyColumnConfiguration">Apply</button>
       </div>
     </div>
   </div>
@@ -106,7 +106,7 @@ export default {
     },
     moveGroupingColumnFirst() {
       const index = this.updatedColumns.findIndex(column => column.grouping === true);
-      if (index >= 0) {
+      if (index !== -1) {
         const [header] = this.updatedColumns.splice(index, 1);
         this.updatedColumns.unshift(header);
       }
