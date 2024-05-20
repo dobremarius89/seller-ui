@@ -24,6 +24,7 @@
         </transition>
       </div>
     </div>
+    <!-- Row grouping -->
     <div v-for="(group, groupIndex) in groupedRows" class="table-component-group" :key="groupIndex">
       <div class="table-component-group-header" @dblclick="toggleExpandGroup(groupIndex)">
         <div class="table-component-group-name">
@@ -45,9 +46,11 @@
     </div>
     <div v-if="!isGroupingActive" id="table-component-body">
       <transition-group name="flip-list" tag="div">
-        <div v-for="row in sortedRows" class="table-component-body-row" :key="row.customer + row.wintactic">
-          <div v-for="column in visibleColumns" class="table-component-body-cell" :key="column.field">
-            {{ row[column.field] }}
+        <div v-for="row in sortedFilteredRows" :key="row.customer + row.wintactic">
+          <div v-if="!shouldFilterRow(row)" class="table-component-body-row">
+            <div v-for="column in visibleColumns" class="table-component-body-cell" :key="column.field">
+              {{ row[column.field] }}
+            </div>
           </div>
         </div>
       </transition-group>
@@ -58,6 +61,7 @@
 <script>
 import {dragscroll} from "vue-dragscroll";
 import {getGroupingColum} from "@/utils/table-utils";
+import eventBus from "@/config/emitter.config";
 
 export default {
   directives: {
@@ -65,7 +69,19 @@ export default {
   },
 
   beforeMount() {
-    this.sortedRows = JSON.parse(JSON.stringify(this.rows));
+    this.sortedFilteredRows = JSON.parse(JSON.stringify(this.rows));
+  },
+
+  mounted() {
+    eventBus.on("applyFilterConfiguration", this.applyFilter);
+    eventBus.on("deleteFilterConfiguration", this.deleteFilter);
+    eventBus.on("clearFilterConfiguration", this.clearFilters);
+  },
+
+  beforeUnmount() {
+    eventBus.off("applyFilterConfiguration", this.applyFilter);
+    eventBus.off("deleteFilterConfiguration", this.deleteFilter);
+    eventBus.off("clearFilterConfiguration", this.clearFilters);
   },
 
   updated() {
@@ -84,6 +100,7 @@ export default {
 
   watch: {
     columns(updatedColumns) {
+      //todo check not to do the grouping if visibility changes or order of columns
       this.initTable();
       const groupingColumn = getGroupingColum(updatedColumns);
       if (groupingColumn) {
@@ -99,7 +116,7 @@ export default {
 
   data: () => ({
     groupedRows: [],
-    sortedRows: [],
+    sortedFilteredRows: [],
     groupHeaderWidthUpdated: false,
     expandedGroups: [],
     isGroupingActive: false,
@@ -160,7 +177,8 @@ export default {
       this.shownColumFilter = null;
     },
     shouldShowFilter(column) {
-      return this.shownColumFilter === column.field;
+      const index = this.filterColumns.findIndex(val => val.column === column.field);
+      return index !== -1 || this.shownColumFilter === column.field;
     },
     isSortedAsc(column) {
       if (this.sortingColumn.column === column.field) {
@@ -188,7 +206,7 @@ export default {
       }
       this.sortingColumn.column = column.field;
 
-      return this.sortedRows.sort((first, second) => {
+      return this.sortedFilteredRows.sort((first, second) => {
         const firstValue = first[this.sortingColumn.column];
         const secondValue = second[this.sortingColumn.column];
         if (this.sortingColumn.sorting === "asc") {
@@ -199,19 +217,45 @@ export default {
       });
     },
     openFilter(column, event) {
-      const index = this.filterColumns.findIndex(col => col.field === column.field);
+      /* Search in the array and retrieve the index
+      * If the index does not exist, initialize and emit the event
+      * Else, send the filter as it is stored */
+      let index = this.filterColumns.findIndex(col => col.column === column.field);
       if (index === -1) {
-        this.filterColumns.push({
+        const values = this.getDistinctValues(column);
+        this.$emit("openFilterConfiguration", {
           column: column.field,
-          values: this.getDistinctValues(column)
-        })
+          values: values,
+          selected: values
+        });
+      } else {
+        this.$emit("openFilterConfiguration", this.filterColumns[index]);
       }
-      console.log(this.filterColumns);
-      this.$emit("openFilterConfiguration", this.filterColumns);
       event.stopPropagation();
     },
     getDistinctValues(column) {
-      return [...new Set(this.sortedRows.map(row => row[column.field]))];
+      return [...new Set(this.sortedFilteredRows.map(row => row[column.field]))];
+    },
+    applyFilter(selectedValues) {
+      const index = this.filterColumns.findIndex(val => val.column === selectedValues.column);
+      if (index !== -1) {
+          this.filterColumns[index].selected = selectedValues.selected;
+      } else {
+        this.filterColumns.push(selectedValues)
+      }
+    },
+    deleteFilter(column) {
+      const index = this.filterColumns.findIndex(val => val.column === column);
+      console.log(column)
+      this.filterColumns.splice(index, 1)
+    },
+    clearFilters() {
+      this.filterColumns = [];
+    },
+    shouldFilterRow(row) {
+      return this.filterColumns.some(filter => {
+        return filter.selected.indexOf(row[filter.column]) === -1;
+      });
     }
   }
 }

@@ -1,24 +1,31 @@
 <template>
-  <div id="configuration-modal">
-    <div id="configuration">
-      <div id="configuration-title">
-        <p id="configuration-title-text">Filter</p>
+  <div id="filter-modal">
+    <div id="filter">
+      <div id="filter-title">
+          <label id="filter-title-text">Filter</label>
+          <input :checked="shouldCheckSelectAll()" style="margin-left: auto" type="checkbox" @input="checkOrUncheckAllValues">
+          <label id="filter-select-all" @click="checkOrUncheckAllValues">Select all</label>
       </div>
-      <div id="configuration-search-bar">
-        <input id="configuration-search" v-model="searchText" placeholder="Search..." @input="filterColumn"/>
+      <div id="filter-search-bar">
+        <input id="filter-search" v-model="searchText" placeholder="Search..." @input="searchValue"/>
       </div>
-      <div v-dragscroll.y id="configuration-rows">
+      <div v-dragscroll.y id="filter-rows">
         <transition-group name="flip-list" tag="div">
-          <div v-for="value in filterColumns[0].values" :key="value">
-            <div class="configuration-row">
-              {{ value }}
+          <div v-for="value in filteredValues" :key="value">
+            <div class="filter-row">
+              <input :checked="shouldCheckBox(value)"
+                     :value="value"
+                     class="filter-checkbox"
+                     @input="checkOrUncheckValue(value)"
+                     type="checkbox">
+              <label class="filter-row-text" @click="checkOrUncheckValue(value)">{{ value }}</label>
             </div>
           </div>
         </transition-group>
       </div>
-      <div id="configuration-buttons">
+      <div id="filter-buttons">
         <button id="button-cancel" @click="closeFilterConfiguration">Cancel</button>
-        <button id="button-apply" @click="applyColumnConfiguration()">Apply</button>
+        <button id="button-apply" @click="applyFilterConfiguration">Apply</button>
       </div>
     </div>
   </div>
@@ -26,6 +33,7 @@
 
 <script>
 import {dragscroll} from "vue-dragscroll";
+import eventBus from "@/config/emitter.config";
 
 export default {
   directives: {
@@ -33,53 +41,84 @@ export default {
   },
 
   beforeMount() {
-    this.initColumnConfiguration();
-  },
-
-  mounted() {
-    console.log(this.filterColumns);
+    this.initFilterConfiguration();
   },
 
   props: {
-    filterColumns: Object
+    filterValues: Object
+  },
+
+  computed: {
+    distinctValues() {
+      return this.filterValues.values;
+    },
+    isAllChecked() {
+      return this.selectedValues.length === this.distinctValues.length && this.selectedValues.length > 0
+    }
   },
 
   data: () => ({
     searchText: null,
-    filterRows: [],
-    updatedColumns: []
+    selectedValues: [],
+    updatedColumns: [],
+    filteredValues: [],
   }),
 
   methods: {
-    initColumnConfiguration() {
+    initFilterConfiguration() {
       this.searchText = null;
+      this.filteredValues = [...this.distinctValues];
+      this.selectedValues = [...this.filterValues.selected];
     },
     closeFilterConfiguration() {
       this.$emit("closeFilterConfiguration");
     },
-    applyColumnConfiguration() {
-      this.unClickColumnButton();
-      this.$emit("applyColumnConfiguration", this.updatedColumns);
-      this.closeColumnConfiguration();
-    },
-    filterColumn() {
-      if (this.searchText) {
-        this.updatedColumns.forEach(column => {
-          column.filtered = !column.field.toLocaleLowerCase().startsWith(this.searchText.toLowerCase());
-        });
+    applyFilterConfiguration() {
+      if (this.isAllChecked) {
+        eventBus.emit("deleteFilterConfiguration", this.filterValues.column);
       } else {
-        this.updatedColumns.forEach(column => column.filtered = false);
+        eventBus.emit("applyFilterConfiguration", {
+          column: this.filterValues.column,
+          selected: this.selectedValues,
+          values: this.filterValues.values
+        });
+      }
+      this.closeFilterConfiguration();
+    },
+    searchValue() {
+      if (this.searchText) {
+        this.filteredValues = this.distinctValues.filter(value => value.toLocaleLowerCase().startsWith(this.searchText.toLowerCase()));
+      } else {
+        this.filteredValues = [...this.distinctValues];
       }
     },
-    receiveDataOverBus(data) {
-      console.log(data);
+    checkOrUncheckAllValues() {
+      if (!this.isAllChecked) {
+        this.selectedValues = [...this.distinctValues];
+      } else {
+        this.selectedValues = [];
+      }
+    },
+    shouldCheckBox(value) {
+      return this.selectedValues.findIndex(val => val === value) !== -1;
+    },
+    shouldCheckSelectAll() {
+      return this.isAllChecked;
+    },
+    checkOrUncheckValue(value) {
+      const index = this.selectedValues.findIndex(val => val === value);
+      if (index !== -1) {
+        this.selectedValues.splice(index, 1);
+      } else {
+        this.selectedValues.push(value);
+      }
     }
   }
 }
 </script>
 
 <style scoped>
-#configuration-modal {
+#filter-modal {
   position: fixed;
   top: 0;
   left: 0;
@@ -89,7 +128,7 @@ export default {
   z-index: 1;
 }
 
-#configuration {
+#filter {
   position: absolute;
   width: 400px;
   top: calc(50% - 200px);
@@ -99,7 +138,7 @@ export default {
   border-radius: 20px;
 }
 
-#configuration-title {
+#filter-title {
   align-items: center;
   border-bottom: 1px solid #D0D5DD;
   min-width: 280px;
@@ -108,14 +147,23 @@ export default {
   margin: 0 20px 0 20px;
 }
 
-#configuration-title-text {
+#filter-title-text {
   font-family: Inter-Bold, serif;
   font-size: 18px;
   color: #4B465C;
   opacity: 65%;
 }
 
-#configuration-search-bar {
+#filter-select-all {
+  font-family: Inter-Regular, serif;
+  font-size: 14px;
+  color: #717171;
+  opacity: 65%;
+  user-select: none;
+  margin-left: 5px;
+}
+
+#filter-search-bar {
   margin: 15px 20px 0 20px;
   background-color: #E4E4E4;
   border-radius: 20px;
@@ -125,7 +173,7 @@ export default {
   align-items: center;
 }
 
-#configuration-search {
+#filter-search {
   margin: 0 20px 0 20px;
   border: none;
   background-color: #E4E4E4;
@@ -135,7 +183,7 @@ export default {
   width: 100%;
 }
 
-#configuration-rows {
+#filter-rows {
   margin: 15px 20px 0 20px;
   border: 1px solid #D0D5DD;
   border-radius: 20px;
@@ -144,14 +192,13 @@ export default {
   user-select: none;
 }
 
-#configuration-rows::-webkit-scrollbar {
+#filter-rows::-webkit-scrollbar {
   display: none;
 }
 
-.configuration-row {
+.filter-row {
   font-family: Inter-Regular, serif;
   font-size: 16px;
-  opacity: 65%;
   color: #4B465C;
   height: 50px;
   align-items: center;
@@ -159,7 +206,12 @@ export default {
   display: flex;
 }
 
-#configuration-buttons {
+.filter-row-text {
+  margin-left: 10px;
+  opacity: 65%;
+}
+
+#filter-buttons {
   display: flex;
   justify-content: center;
   margin: 20px 0 20px 0;
@@ -187,33 +239,6 @@ export default {
   border: 1px solid #98A2B3;
   background-color: #F2F4F7;
   color: #98A2B3;
-  cursor: pointer;
-}
-
-.configuration-row-images {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-}
-
-.image-arrow {
-  margin-right: 5px;
-  cursor: pointer;
-}
-
-.image-group {
-  cursor: pointer;
-}
-
-.image-disabled {
-  opacity: 0.25;
-  cursor: default;
-  pointer-events: none;
-}
-
-.image-show {
-  width: 20px;
-  margin-right: 20px;
   cursor: pointer;
 }
 

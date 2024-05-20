@@ -12,6 +12,7 @@
         <table-header @openColumnConfiguration="openColumnConfiguration"/>
         <table-component :columns="columns"
                          :rows="rows"
+                         :filterValues="filterValues"
                          @openFilterConfiguration="openFilterConfiguration"/>
         <column-configuration v-if="isColumnConfigurationOpened"
                               :columns="columns"
@@ -19,7 +20,7 @@
                               @closeColumnConfiguration="closeColumnConfiguration"
                               @applyColumnConfiguration="applyColumnConfiguration"/>
         <filter-configuration v-if="isFilterConfigurationOpened"
-                              :filterColumns="filterColumns"
+                              :filterValues="filterValues"
                               @closeFilterConfiguration="closeFilterConfiguration"/>
       </div>
     </div>
@@ -323,7 +324,7 @@ export default {
         hidden: false
       }
     ],
-    filterColumns: [],
+    filterValues: [],
     isColumnConfigurationOpened: false,
     isFilterConfigurationOpened: false
   }),
@@ -335,14 +336,15 @@ export default {
     closeColumnConfiguration() {
       this.isColumnConfigurationOpened = false;
     },
-    openFilterConfiguration(filterColumns) {
-      this.filterColumns = filterColumns;
+    openFilterConfiguration(filterValues) {
+      this.filterValues = filterValues;
       this.isFilterConfigurationOpened = true;
     },
     closeFilterConfiguration() {
       this.isFilterConfigurationOpened = false;
     },
     applyColumnConfiguration(updatedColumns) {
+      //todo use event bus and send columns to table component directly
       this.columns = JSON.parse(JSON.stringify(updatedColumns));
     }
   }

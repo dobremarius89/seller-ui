@@ -28,7 +28,7 @@
                            @click="openColumnConfiguration()"/>
       <table-header-button :text="'Clear Filter'"
                            :clicked="clickedHeaderButton === 4"
-                           @click="clickButton(4, $event)"/>
+                           @click="clearAllFilters()"/>
     </div>
   </div>
 </template>
@@ -76,6 +76,9 @@ export default {
     openColumnConfiguration() {
       this.clickedHeaderButton = 3;
       this.$emit("openColumnConfiguration");
+    },
+    clearAllFilters() {
+      eventBus.emit("clearFilterConfiguration");
     }
   }
 }

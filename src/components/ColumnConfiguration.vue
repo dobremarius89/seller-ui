@@ -2,10 +2,10 @@
   <div id="configuration-modal">
     <div id="configuration">
       <div id="configuration-title">
-        <p id="configuration-title-text">Column</p>
+        <label id="configuration-title-text">Column</label>
       </div>
       <div id="configuration-search-bar">
-        <input id="configuration-search" v-model="searchText" placeholder="Search..." @input="filterColumn"/>
+        <input id="configuration-search" v-model="searchText" placeholder="Search..." @input="searchColumn"/>
       </div>
       <div v-dragscroll.y id="configuration-rows">
         <transition-group name="flip-list" tag="div">
@@ -153,7 +153,7 @@ export default {
     unClickColumnButton() {
       eventBus.emit("unClickColumnButton", "3");
     },
-    filterColumn() {
+    searchColumn() {
       if (this.searchText) {
         this.updatedColumns.forEach(column => {
           column.filtered = !column.field.toLocaleLowerCase().startsWith(this.searchText.toLowerCase());
