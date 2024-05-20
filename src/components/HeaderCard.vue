@@ -5,7 +5,7 @@
     </div>
     <div class="card-elements">
       <div v-for="(topic, index) in getTopicNames(topics)" :key="index">
-        <transition name="fade">
+        <transition name="dropdown">
           <a v-if="isMainTopic(topic) || isMainTopicSelected(topic)"
              :class="{'sub-topic' : isSubTopic(topic), 'card-element' : isMainTopic(topic)}"
              :href="getTopicUrl(topics, topic)"
@@ -163,12 +163,11 @@ export default {
   transform: rotate(90deg);
 }
 
-.fade-enter-active, .fade-leave-active {
-  transition: height 0.25s ease;
+.dropdown-enter-active, .dropdown-leave-active {
+  transition: height 0.25s linear;
 }
 
-.fade-enter-from, .fade-leave-to {
+.dropdown-enter-from, .dropdown-leave-to {
   height: 0;
-  opacity: 0;
 }
 </style>

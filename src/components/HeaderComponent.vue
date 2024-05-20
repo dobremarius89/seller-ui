@@ -21,9 +21,9 @@
                      :title="'Help'"
                      :topics="helpTopics"/>
       </div>
-      <header-button :src="require('@/assets/home/notification.png')"
-                     :clicked="clickedHeaderButton === 3"
-                     @click="clickButton(3, $event)"/>
+        <header-button :src="require('@/assets/home/notification.png')"
+                       :clicked="clickedHeaderButton === 3"
+                       @click="clickButton(3, $event)"/>
       <div style="position: relative; display: inline-block;">
         <header-button :src="require('@/assets/home/portrait.png')"
                        style="margin-right: 0"
@@ -50,6 +50,11 @@ export default defineComponent({
   beforeMount() {
     document.addEventListener('click', this.unClickButton);
   },
+
+  beforeUnmount() {
+    document.removeEventListener('click', this.unClickButton);
+  },
+
 
   data: () => ({
     clickedHeaderButton: 0,

@@ -15,10 +15,13 @@
       </button>
     </div>
     <div id="functions">
-      <table-header-button :text="'Update'"
-                           :has-arrows="true"
-                           :clicked="clickedHeaderButton === 1"
-                           @click="clickButton(1, $event)"/>
+      <div style="position: relative; display: inline-block;">
+        <table-header-button :text="'Update'"
+                             :has-arrows="true"
+                             :clicked="clickedHeaderButton === 1"
+                             @click="clickButton(1, $event)"/>
+        <update-table-menu v-if="clickedHeaderButton === 1"/>
+      </div>
       <table-header-button :text="'Export'"
                            :src="require('@/assets/home/download.png')"
                            :clicked="clickedHeaderButton === 2"
@@ -36,9 +39,10 @@
 <script>
 import TableHeaderButton from "@/components/TableHeaderButton.vue";
 import eventBus from "@/config/emitter.config";
+import UpdateTableMenu from "@/components/UpdateTableMenu.vue";
 
 export default {
-  components: {TableHeaderButton},
+  components: {UpdateTableMenu, TableHeaderButton},
 
   beforeMount() {
     document.addEventListener('click', this.unClickButtonOverListener);
@@ -50,6 +54,7 @@ export default {
 
   beforeUnmount() {
     eventBus.off("unClickColumnButton", this.unClickButtonOverBus);
+    document.removeEventListener('click', this.unClickButtonOverListener);
   },
 
   data: () => ({
