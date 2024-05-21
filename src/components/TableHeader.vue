@@ -50,10 +50,12 @@ export default {
 
   mounted() {
     eventBus.on("unClickColumnButton", this.unClickButtonOverBus);
+    eventBus.on("closeNonHeaderDropdowns", this.unClickButtonOverBus);
   },
 
   beforeUnmount() {
     eventBus.off("unClickColumnButton", this.unClickButtonOverBus);
+    eventBus.off("closeNonHeaderDropdowns", this.unClickButtonOverBus);
     document.removeEventListener('click', this.unClickButtonOverListener);
   },
 
@@ -68,6 +70,7 @@ export default {
     },
     clickButton(number, event) {
       this.clickedHeaderButton = number;
+      eventBus.emit("closeNonTableDropdowns")
       event.stopPropagation();
     },
     unClickButtonOverBus() {

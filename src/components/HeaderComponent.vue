@@ -17,9 +17,7 @@
         <header-button :src="require('@/assets/home/help.png')"
                        :clicked="clickedHeaderButton === 2"
                        @click="clickButton(2, $event)"/>
-        <header-card v-if="clickedHeaderButton === 2"
-                     :title="'Help'"
-                     :topics="helpTopics"/>
+        <help-menu v-if="clickedHeaderButton === 2"/>
       </div>
         <header-button :src="require('@/assets/home/notification.png')"
                        :clicked="clickedHeaderButton === 3"
@@ -27,13 +25,11 @@
       <div style="position: relative; display: inline-block;">
         <header-button :src="require('@/assets/home/portrait.png')"
                        style="margin-right: 0"
-                       :text="'marius.dobre.romania'"
+                       :text="'marius.dobre'"
                        :clicked="clickedHeaderButton === 4"
                        :has-arrows="true"
                        @click="clickButton(4, $event)"/>
-        <header-card v-if="clickedHeaderButton === 4"
-                     :title="'Personal Profile'"
-                     :topics="userTopics"/>
+        <profile-menu v-if="clickedHeaderButton === 4"/>
       </div>
     </div>
   </div>
@@ -42,40 +38,29 @@
 <script>
 import {defineComponent} from "vue";
 import HeaderButton from "@/components/HeaderButton.vue";
-import HeaderCard from "@/components/HeaderCard.vue";
+import HelpMenu from "@/components/HelpMenu.vue";
+import eventBus from "@/config/emitter.config";
+import ProfileMenu from "@/components/ProfileMenu.vue";
 
 export default defineComponent({
-  components: {HeaderCard, HeaderButton},
+  components: {ProfileMenu, HelpMenu, HeaderButton},
 
   beforeMount() {
-    document.addEventListener('click', this.unClickButton);
+    document.addEventListener('click', this.unClickButtonOverListener);
+  },
+
+  mounted() {
+    eventBus.on("closeNonTableDropdowns", this.unClickButtonOverBus);
   },
 
   beforeUnmount() {
-    document.removeEventListener('click', this.unClickButton);
+    eventBus.off("closeNonTableDropdowns", this.unClickButtonOverBus);
+    document.removeEventListener('click', this.unClickButtonOverListener);
   },
 
 
   data: () => ({
     clickedHeaderButton: 0,
-    helpTopics: {
-      "Anakademy for our Anakademic users": "http://localhost/anakademy",
-      "Anakademy": "http://localhost/anakademy",
-      "Legal": {
-        "Privacy statement": "http://localhost/privacy",
-        "Security statement": "http://localhost/security",
-        "Terms of use": "http://localhost/terms-of-use",
-        "Participation guidelines": "http://localhost/participation",
-        "Cookie preferences": "http://localhost/cookies"
-      },
-      "Get Support": "http://localhost/support",
-      "Anakademy test": "http://localhost/anakademy",
-      "Get Support right away if you really need": {
-        "Terms of use for this website that i work on at this moment": "http://localhost/terms-of-use",
-        "Participation guidelines1": "http://localhost/participation",
-        "Cookie preferences1": "http://localhost/cookies"
-      }
-    },
     userTopics: {
       "Profile": "http://localhost/anakademy",
       "Preferences": "http://localhost/anakademy",
@@ -86,9 +71,13 @@ export default defineComponent({
   methods: {
     clickButton(number, event) {
       this.clickedHeaderButton = number;
+      eventBus.emit("closeNonHeaderDropdowns")
       event.stopPropagation();
     },
-    unClickButton() {
+    unClickButtonOverListener() {
+      this.clickedHeaderButton = 0;
+    },
+    unClickButtonOverBus() {
       this.clickedHeaderButton = 0;
     }
   }

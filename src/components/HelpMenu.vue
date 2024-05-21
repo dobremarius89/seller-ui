@@ -1,36 +1,44 @@
 <template>
   <div class="menu">
     <div class="menu-title">
-      <p class="menu-title-text">Update</p>
+      <p class="menu-title-text">Help</p>
     </div>
-      <ul class="list-elements">
-          <li class="list-element">Set action date</li>
-          <li class="list-element">Tags</li>
-          <li class="list-element" @click="expandTopic('status', $event)">Status
-            <img :class="{'arrow-up' : isExpandedTopic('status')}"
-                 class="arrow"
-                 src="@/assets/home/arrow-left.png"/>
-          </li>
-          <transition-group name="dropdown">
-            <li v-if="isExpandedTopic('status')" class="sub-list-element">Dismiss</li>
-            <li v-if="isExpandedTopic('status')" class="sub-list-element">Review</li>
-            <li v-if="isExpandedTopic('status')" class="sub-list-element">Pursue</li>
-          </transition-group>
-          <li class="list-element">Mark as read</li>
-          <li class="list-element">Mark as unread</li>
-          <li class="list-element">Move to archive</li>
-          <li class="list-element">Move to wintactics</li>
-      </ul>
+    <ul class="list-elements">
+      <li class="list-element">
+        <a href="localhost/anakademy">Anakademy</a>
+      </li>
+      <li class="list-element">
+        <a href="localhost/support">Get Support</a>
+      </li>
+      <li class="list-element" @click="expandTopic('status', $event)">
+        Legal
+        <img :class="{'arrow-up' : isExpandedTopic('status')}"
+             class="arrow"
+             src="@/assets/home/arrow-left.png"/>
+      </li>
+      <transition-group name="dropdown">
+        <li v-if="isExpandedTopic('status')" class="sub-list-element">
+          <a href="localhost/privacy">Privacy statement</a>
+        </li>
+        <li v-if="isExpandedTopic('status')" class="sub-list-element">
+          <a href="localhost/security">Security statement</a>
+        </li>
+        <li v-if="isExpandedTopic('status')" class="sub-list-element">
+          <a href="localhost/terms">Terms of use</a>
+        </li>
+        <li v-if="isExpandedTopic('status')" class="sub-list-element">
+          <a href="localhost/participation">Participation</a>
+        </li>
+        <li v-if="isExpandedTopic('status')" class="sub-list-element">
+          <a href="localhost/cookies">Cookies preferences</a>
+        </li>
+      </transition-group>
+    </ul>
   </div>
 </template>
 
 <script>
 export default {
-  props: {
-    title: String,
-    topics: Object
-  },
-
   data: () => ({
     expandedTopic: String
   }),
@@ -69,6 +77,7 @@ export default {
 .menu-title {
   align-items: center;
   border-bottom: 1px solid #D0D5DD;
+  min-width: 280px;
   height: 60px;
   display: flex;
   margin: 0 20px 0 20px;
@@ -87,6 +96,11 @@ export default {
   color: #4B465C;
   margin: 0 20px 0 20px;
   padding: 0;
+}
+
+.list-elements a {
+  text-decoration: none;
+  color: inherit;
 }
 
 .list-element {
@@ -117,6 +131,10 @@ export default {
   padding-left: 20px;
   margin-left: 5px;
   user-select: none;
+}
+
+.sub-list-element:last-child {
+  margin-bottom: 20px;
 }
 
 .sub-list-element:hover {
