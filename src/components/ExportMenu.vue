@@ -1,18 +1,31 @@
 <template>
   <div class="menu">
     <div class="menu-title">
-      <p class="menu-title-text">Personal Profile</p>
+      <p class="menu-title-text">Export</p>
     </div>
     <ul class="list-elements">
-      <li class="list-element">Profile</li>
-      <li class="list-element">Preferences</li>
-      <li class="list-element">Logout</li>
+      <li class="list-element" @click="exportCsv">CSV</li>
+      <li class="list-element" @click="exportXlsx">XLSX</li>
     </ul>
   </div>
 </template>
 
 <script>
+import eventBus from "@/config/emitter.config";
+
 export default {
+  props: {
+    tableData: Object
+  },
+
+  methods: {
+    exportCsv() {
+      eventBus.emit("exportCsv")
+    },
+    exportXlsx() {
+      eventBus.emit("exportXlsx")
+    }
+  }
 }
 </script>
 

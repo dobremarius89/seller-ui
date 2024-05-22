@@ -20,12 +20,15 @@
                              :has-arrows="true"
                              :clicked="clickedHeaderButton === 1"
                              @click="clickButton(1, $event)"/>
-        <update-table-menu v-if="clickedHeaderButton === 1"/>
+        <update-menu v-if="clickedHeaderButton === 1"/>
       </div>
-      <table-header-button :text="'Export'"
-                           :src="require('@/assets/home/download.png')"
-                           :clicked="clickedHeaderButton === 2"
-                           @click="clickButton(2, $event)"/>
+      <div style="position: relative; display: inline-block;">
+        <table-header-button :text="'Export'"
+                             :src="require('@/assets/home/download.png')"
+                             :clicked="clickedHeaderButton === 2"
+                             @click="clickButton(2, $event)"/>
+        <export-menu v-if="clickedHeaderButton === 2"/>
+      </div>
       <table-header-button :text="'Column'"
                            :clicked="clickedHeaderButton === 3"
                            @click="openColumnConfiguration()"/>
@@ -39,10 +42,11 @@
 <script>
 import TableHeaderButton from "@/components/TableHeaderButton.vue";
 import eventBus from "@/config/emitter.config";
-import UpdateTableMenu from "@/components/UpdateTableMenu.vue";
+import UpdateMenu from "@/components/UpdateMenu.vue";
+import ExportMenu from "@/components/ExportMenu.vue";
 
 export default {
-  components: {UpdateTableMenu, TableHeaderButton},
+  components: {ExportMenu, UpdateMenu, TableHeaderButton},
 
   beforeMount() {
     document.addEventListener('click', this.unClickButtonOverListener);

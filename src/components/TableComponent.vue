@@ -62,6 +62,7 @@
 import {dragscroll} from "vue-dragscroll";
 import {getGroupingColum} from "@/utils/table-utils";
 import eventBus from "@/config/emitter.config";
+import * as XLSX from "xlsx";
 
 export default {
   directives: {
@@ -73,12 +74,16 @@ export default {
   },
 
   mounted() {
+    eventBus.on("exportCsv", this.exportCsv);
+    eventBus.on("exportXlsx", this.exportXlsx);
     eventBus.on("applyFilterConfiguration", this.applyFilter);
     eventBus.on("deleteFilterConfiguration", this.deleteFilter);
     eventBus.on("clearFilterConfiguration", this.clearFilters);
   },
 
   beforeUnmount() {
+    eventBus.off("exportCsv", this.exportCsv);
+    eventBus.off("exportXlsx", this.exportXlsx);
     eventBus.off("applyFilterConfiguration", this.applyFilter);
     eventBus.off("deleteFilterConfiguration", this.deleteFilter);
     eventBus.off("clearFilterConfiguration", this.clearFilters);
@@ -256,6 +261,43 @@ export default {
       return this.filterColumns.some(filter => {
         return filter.selected.indexOf(row[filter.column]) === -1;
       });
+    },
+    exportXlsx() {
+      const headers = this.columns.map(column => column.field);
+      const rows = this.rows.map(row => {
+        return headers.map(column => {
+          const value = row[column] === null ? '' : row[column];
+          return `${value.toString().replace(/"/g, '""')}`;
+        });
+      });
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Sheet 1")
+      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([wbout], { type: 'application/octet-stream' });
+      const link = document.createElement('a');
+      link.download = "table_export.xlsx";
+      link.href = window.URL.createObjectURL(blob);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    },
+    exportCsv() {
+      const headers = this.columns.map(column => column.field);
+      const rows = this.rows.map(row => {
+        return headers.map(column => {
+          const value = row[column] === null ? '' : row[column];
+          return `"${value.toString().replace(/"/g, '""')}"`;
+        }).join(',');
+      });
+      const csv = [headers.join(','), ...rows].join('\r\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const link = document.createElement('a');
+      link.download = "table_export.csv";
+      link.href = window.URL.createObjectURL(blob);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   }
 }

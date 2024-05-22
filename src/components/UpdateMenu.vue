@@ -60,7 +60,7 @@ export default {
   background-color: white;
   border: 1px solid #D0D5DD;
   border-radius: 25px;
-  min-width: 280px;
+  min-width: 250px;
   z-index: 1;
   left: 50%;
   transform: translateX(-50%); /* Center the dropdown content horizontally */
