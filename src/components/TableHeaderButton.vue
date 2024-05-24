@@ -35,14 +35,16 @@ export default {
   margin-right: 15px;
   cursor: pointer;
   padding: 0 10px 0 10px;
+  transition: background-color 0.5s ease;
 }
 
 .clicked {
-  background-color: lightgray;
+  background-color: #344054
 }
 
 .unClicked:hover {
-  background-color: lightgray;
+  cursor: pointer;
+  background-color: #344054
 }
 
 .image {

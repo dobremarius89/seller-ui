@@ -24,28 +24,33 @@
         </transition>
       </div>
     </div>
-    <!-- Row grouping -->
-    <div v-for="(group, groupIndex) in groupedRows" class="table-component-group" :key="groupIndex">
-      <div class="table-component-group-header" @dblclick="toggleExpandGroup(groupIndex)">
-        <div class="table-component-group-name">
-          <div class="table-component-group-text">{{ group.value }}</div>
-          <div class="table-component-group-count">{{ group.count }}</div>
-          <img :class="{'table-component-group-arrow-up' : isExpanded(groupIndex)}" class="table-component-group-arrow"
-               src="@/assets/home/arrow_down.png"/>
-        </div>
-      </div>
-      <transition name="fade">
-        <div v-if="isExpanded(groupIndex)" class="table-component-group-rows">
-          <div v-for="(row, index) in group.rows" class="table-component-group-row" :key="index">
-            <div v-for="column in visibleColumns" class="table-component-group-cell" :key="column.field">
-              {{ row[column.field] }}
-            </div>
+    <!-- Grouped rows -->
+    <transition-group name="flip-list">
+      <div v-for="(group, groupIndex) in groupedRows" class="table-component-group" :key="group.field + group.value">
+        <div class="table-component-group-header" @dblclick="toggleExpandGroup(groupIndex)">
+          <div class="table-component-group-name">
+            <div class="table-component-group-text">{{ group.value }}</div>
+            <div class="table-component-group-count">{{ group.count }}</div>
+            <img :class="{'table-component-group-arrow-up' : isExpanded(groupIndex)}" class="table-component-group-arrow"
+                 src="@/assets/home/arrow_down.png"/>
           </div>
         </div>
-      </transition>
-    </div>
+        <transition name="fade">
+          <div v-if="isExpanded(groupIndex)" class="table-component-group-rows">
+            <transition-group name="flip-list">
+              <div v-for="row in group.rows" class="table-component-group-row" :key="row.customer + row.wintactic">
+                <div v-for="column in visibleColumns" class="table-component-group-cell" :key="column.field">
+                  {{ row[column.field] }}
+                </div>
+              </div>
+            </transition-group>
+          </div>
+        </transition>
+      </div>
+    </transition-group>
+    <!-- Ungrouped rows -->
     <div v-if="!isGroupingActive" id="table-component-body">
-      <transition-group name="flip-list" tag="div">
+      <transition-group name="flip-list">
         <div v-for="row in sortedFilteredRows" :key="row.customer + row.wintactic">
           <div v-if="!shouldFilterRow(row)" class="table-component-body-row">
             <div v-for="column in visibleColumns" class="table-component-body-cell" :key="column.field">
@@ -70,7 +75,7 @@ export default {
   },
 
   beforeMount() {
-    this.sortedFilteredRows = JSON.parse(JSON.stringify(this.rows));
+    this.sortedFilteredRows = [...this.rows];
   },
 
   mounted() {
@@ -123,8 +128,6 @@ export default {
     groupedRows: [],
     sortedFilteredRows: [],
     groupHeaderWidthUpdated: false,
-    expandedGroups: [],
-    isGroupingActive: false,
     shownColumFilter: null,
     sortingColumn: {
       column: null,
@@ -137,6 +140,10 @@ export default {
     visibleColumns() {
       return this.columns.filter(column => column.hidden === false);
     },
+    isGroupingActive() {
+      const column = getGroupingColum(this.columns)
+      return !!column;
+    }
   },
 
   methods: {
@@ -165,15 +172,10 @@ export default {
       this.isGroupingActive = true;
     },
     toggleExpandGroup(index) {
-      const position = this.expandedGroups.indexOf(index);
-      if (position === -1) {
-        this.expandedGroups.push(index);
-      } else {
-        this.expandedGroups = this.expandedGroups.filter(element => element !== index);
-      }
+      this.groupedRows[index].expanded = this.groupedRows[index].expanded !== true;
     },
     isExpanded(index) {
-      return this.expandedGroups.indexOf(index) !== -1;
+      return this.groupedRows[index].expanded === true;
     },
     showColumnFilter(column) {
       this.shownColumFilter = column.field;
@@ -211,7 +213,14 @@ export default {
       }
       this.sortingColumn.column = column.field;
 
-      return this.sortedFilteredRows.sort((first, second) => {
+      if (this.isGroupingActive) {
+        this.sortGroups();
+      } else {
+        this.sortRows();
+      }
+    },
+    sortRows() {
+      this.sortedFilteredRows.sort((first, second) => {
         const firstValue = first[this.sortingColumn.column];
         const secondValue = second[this.sortingColumn.column];
         if (this.sortingColumn.sorting === "asc") {
@@ -220,6 +229,33 @@ export default {
           return firstValue > secondValue ? -1 : (firstValue < secondValue ? 1 : 0);
         }
       });
+    },
+    sortGroups() {
+      /* If sorting by grouping column */
+      if (getGroupingColum(this.columns) === this.sortingColumn.column) {
+        this.groupedRows.sort((first, second) => {
+          const firstValue = first.value;
+          const secondValue = second.value;
+          if (this.sortingColumn.sorting === "asc") {
+            return firstValue < secondValue ? -1 : (firstValue > secondValue ? 1 : 0);
+          } else {
+            return firstValue > secondValue ? -1 : (firstValue < secondValue ? 1 : 0);
+          }
+        });
+      /* Else, sorting by any other column */
+      } else {
+        this.groupedRows.forEach(groupedRow => {
+          groupedRow.rows.sort((first, second) => {
+            const firstValue = first[this.sortingColumn.column];
+            const secondValue = second[this.sortingColumn.column];
+            if (this.sortingColumn.sorting === "asc") {
+              return firstValue < secondValue ? -1 : (firstValue > secondValue ? 1 : 0);
+            } else {
+              return firstValue > secondValue ? -1 : (firstValue < secondValue ? 1 : 0);
+            }
+          });
+        });
+      }
     },
     openFilter(column, event) {
       /* Search in the array and retrieve the index
@@ -244,14 +280,13 @@ export default {
     applyFilter(selectedValues) {
       const index = this.filterColumns.findIndex(val => val.column === selectedValues.column);
       if (index !== -1) {
-          this.filterColumns[index].selected = selectedValues.selected;
+        this.filterColumns[index].selected = selectedValues.selected;
       } else {
         this.filterColumns.push(selectedValues)
       }
     },
     deleteFilter(column) {
       const index = this.filterColumns.findIndex(val => val.column === column);
-      console.log(column)
       this.filterColumns.splice(index, 1)
     },
     clearFilters() {
@@ -273,8 +308,8 @@ export default {
       const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Sheet 1")
-      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-      const blob = new Blob([wbout], { type: 'application/octet-stream' });
+      const xlsx = XLSX.write(wb, {bookType: 'xlsx', type: 'array'});
+      const blob = new Blob([xlsx], {type: 'application/octet-stream'});
       const link = document.createElement('a');
       link.download = "table_export.xlsx";
       link.href = window.URL.createObjectURL(blob);
@@ -291,7 +326,7 @@ export default {
         }).join(',');
       });
       const csv = [headers.join(','), ...rows].join('\r\n');
-      const blob = new Blob([csv], { type: 'text/csv' });
+      const blob = new Blob([csv], {type: 'text/csv'});
       const link = document.createElement('a');
       link.download = "table_export.csv";
       link.href = window.URL.createObjectURL(blob);

@@ -344,8 +344,7 @@ export default {
       this.isFilterConfigurationOpened = false;
     },
     applyColumnConfiguration(updatedColumns) {
-      //todo use event bus and send columns to table component directly
-      this.columns = JSON.parse(JSON.stringify(updatedColumns));
+      this.columns = updatedColumns;
     }
   }
 }
