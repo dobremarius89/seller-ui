@@ -26,7 +26,7 @@
     </div>
     <!-- Grouped rows -->
     <transition-group name="flip-list">
-      <div v-for="(group, groupIndex) in groupedRows" class="table-component-group" :key="group.field + group.value">
+      <div v-for="(group, groupIndex) in groupedRows" :key="group.field + group.value">
         <div class="table-component-group-header" @dblclick="toggleExpandGroup(groupIndex)">
           <div class="table-component-group-name">
             <div class="table-component-group-text">{{ group.value }}</div>
@@ -35,7 +35,6 @@
                  src="@/assets/home/arrow_down.png"/>
           </div>
         </div>
-        <transition name="fade">
           <div v-if="isExpanded(groupIndex)" class="table-component-group-rows">
             <transition-group name="flip-list">
               <div v-for="row in group.rows" class="table-component-group-row" :key="row.customer + row.wintactic">
@@ -45,7 +44,6 @@
               </div>
             </transition-group>
           </div>
-        </transition>
       </div>
     </transition-group>
     <!-- Ungrouped rows -->
@@ -233,6 +231,13 @@ export default {
     sortGroups() {
       /* If sorting by grouping column */
       if (getGroupingColum(this.columns) === this.sortingColumn.column) {
+        const groupedRows = [];
+        this.groupedRows.forEach(groupedRow => {
+          if (groupedRow.expanded === true) {
+            groupedRows.push(groupedRow.value)
+          }
+          groupedRow.expanded = false;
+        });
         this.groupedRows.sort((first, second) => {
           const firstValue = first.value;
           const secondValue = second.value;
@@ -242,6 +247,13 @@ export default {
             return firstValue > secondValue ? -1 : (firstValue < secondValue ? 1 : 0);
           }
         });
+        setTimeout(() => {this.groupedRows.forEach(groupedRow => {
+          groupedRows.forEach(row => {
+            if (row === groupedRow.value) {
+              groupedRow.expanded = true;
+            }
+          });
+        })}, 500);
       /* Else, sorting by any other column */
       } else {
         this.groupedRows.forEach(groupedRow => {
@@ -518,21 +530,8 @@ export default {
   transition: opacity 0.5s ease;
 }
 
-.fade-leave-active {
-  transition: opacity 0.5s ease;
-}
-
-.fade-leave-to {
-  opacity: 0;
-  height: 0;
-}
-
-.fade-enter-active {
-  animation: fade-in 0.5s ease;
-}
-
 .flip-list-move {
-  transition: transform 0.5s;
+  transition: all 0.5s;
 }
 
 @keyframes fade-in {
