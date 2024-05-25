@@ -46,6 +46,18 @@ export default {
   data: () => ({
     rows: [
       {
+        "customer": "Zellos Systems",
+        "wintactic": "Transform aaS",
+        "status": "Dismiss",
+        "tags": "#aas,#priority#2,#opex",
+        "action_date": "",
+        "start_date": "1-Jan-24",
+        "end_date": "31-Dec-24",
+        "strategy": "Pivot to aaS",
+        "unread_comments": 1,
+        "total_comments": 1
+      },
+      {
         "customer": "Acme Inc",
         "wintactic": "3D Engage",
         "status": "Review",

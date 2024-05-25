@@ -1,5 +1,5 @@
 <template>
-  <div v-dragscroll.x id="table-content">
+  <div id="table-component">
     <div id="table-component-header">
       <div v-for="column in visibleColumns"
            class="table-component-header-cell"
@@ -24,17 +24,19 @@
         </transition>
       </div>
     </div>
-    <!-- Grouped rows -->
-    <transition-group name="flip-list">
-      <div v-for="(group, groupIndex) in groupedRows" :key="group.field + group.value">
-        <div class="table-component-group-header" @dblclick="toggleExpandGroup(groupIndex)">
-          <div class="table-component-group-name">
-            <div class="table-component-group-text">{{ group.value }}</div>
-            <div class="table-component-group-count">{{ group.count }}</div>
-            <img :class="{'table-component-group-arrow-up' : isExpanded(groupIndex)}" class="table-component-group-arrow"
-                 src="@/assets/home/arrow_down.png"/>
+    <div v-dragscroll.x id="table-component-body">
+      <!-- Grouped rows -->
+      <transition-group name="flip-list">
+        <div v-for="(group, groupIndex) in groupedRows" :key="group.field + group.value">
+          <div class="table-component-group-header" @dblclick="toggleExpandGroup(groupIndex)">
+            <div class="table-component-group-name">
+              <div class="table-component-group-text">{{ group.value }}</div>
+              <div class="table-component-group-count">{{ group.count }}</div>
+              <img :class="{'table-component-group-arrow-up' : isExpanded(groupIndex)}"
+                   class="table-component-group-arrow"
+                   src="@/assets/home/arrow_down.png"/>
+            </div>
           </div>
-        </div>
           <div v-if="isExpanded(groupIndex)" class="table-component-group-rows">
             <transition-group name="flip-list">
               <div v-for="row in group.rows" class="table-component-group-row" :key="row.customer + row.wintactic">
@@ -44,19 +46,20 @@
               </div>
             </transition-group>
           </div>
-      </div>
-    </transition-group>
-    <!-- Ungrouped rows -->
-    <div v-if="!isGroupingActive" id="table-component-body">
-      <transition-group name="flip-list">
-        <div v-for="row in sortedFilteredRows" :key="row.customer + row.wintactic">
-          <div v-if="!shouldFilterRow(row)" class="table-component-body-row">
-            <div v-for="column in visibleColumns" class="table-component-body-cell" :key="column.field">
-              {{ row[column.field] }}
-            </div>
-          </div>
         </div>
       </transition-group>
+      <!-- Ungrouped rows -->
+      <div v-if="!isGroupingActive">
+        <transition-group name="flip-list">
+          <div v-for="row in sortedFilteredRows" :key="row.customer + row.wintactic">
+            <div v-if="!shouldFilterRow(row)" class="table-component-body-row">
+              <div v-for="column in visibleColumns" class="table-component-body-cell" :key="column.field">
+                {{ row[column.field] }}
+              </div>
+            </div>
+          </div>
+        </transition-group>
+      </div>
     </div>
   </div>
 </template>
@@ -77,6 +80,7 @@ export default {
   },
 
   mounted() {
+    this.addScrollListener();
     eventBus.on("exportCsv", this.exportCsv);
     eventBus.on("exportXlsx", this.exportXlsx);
     eventBus.on("applyFilterConfiguration", this.applyFilter);
@@ -85,6 +89,7 @@ export default {
   },
 
   beforeUnmount() {
+    this.removeScrollListener();
     eventBus.off("exportCsv", this.exportCsv);
     eventBus.off("exportXlsx", this.exportXlsx);
     eventBus.off("applyFilterConfiguration", this.applyFilter);
@@ -247,14 +252,16 @@ export default {
             return firstValue > secondValue ? -1 : (firstValue < secondValue ? 1 : 0);
           }
         });
-        setTimeout(() => {this.groupedRows.forEach(groupedRow => {
-          groupedRows.forEach(row => {
-            if (row === groupedRow.value) {
-              groupedRow.expanded = true;
-            }
-          });
-        })}, 500);
-      /* Else, sorting by any other column */
+        setTimeout(() => {
+          this.groupedRows.forEach(groupedRow => {
+            groupedRows.forEach(row => {
+              if (row === groupedRow.value) {
+                groupedRow.expanded = true;
+              }
+            });
+          })
+        }, 500);
+        /* Else, sorting by any other column */
       } else {
         this.groupedRows.forEach(groupedRow => {
           groupedRow.rows.sort((first, second) => {
@@ -345,27 +352,46 @@ export default {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+    },
+    addScrollListener() {
+      this.content = document.getElementById('table-component-body');
+      this.header = document.getElementById('table-component-header');
+      this.content.addEventListener('scroll', this.handleSynchronousScroll);
+    },
+    removeScrollListener() {
+      this.content.removeEventListener('scroll', this.handleSynchronousScroll);
+    },
+    handleSynchronousScroll() {
+      this.header.scrollLeft = this.content.scrollLeft;
     }
   }
 }
 </script>
 
 <style scoped>
-#table-content {
+#table-component {
   /* Calculate high as 100vh minus headers, minus metrics, minus 3 margins */
   height: calc(100vh - 100px - 226px - 55px - 40px - 40px - 40px);
   /* Table's width should match the left margin of header's search bar */
   /* Calculate width as 60%* of total width, including left margin */
   width: calc((100% + 2 * 60px) * 0.6);
   overflow-x: hidden;
+  overflow-y: auto;
   background-color: #FFFAEB;
 }
 
-#table-content::-webkit-scrollbar {
+#table-component-body {
+  overflow-x: hidden;
+  /* Calculate high as 100vh minus headers, minus metrics, minus 3 margins */
+  height: calc(100vh - 100px - 45px - 226px - 55px - 40px - 40px - 40px);
+}
+
+#table-component-body::-webkit-scrollbar {
   display: none;
 }
 
 #table-component-header {
+  overflow: hidden;
   display: flex;
 }
 
@@ -435,22 +461,24 @@ export default {
 
 .table-component-body-row {
   display: flex;
+  transition: background-color 0.5s linear;
+}
+
+.table-component-body-row:hover {
+  cursor: pointer;
+  background-color: #C7C7C7;
 }
 
 .table-component-body-cell {
   min-width: 200px;
   max-width: 200px;
   height: 50px;
-  background-color: #FFFAEB;
   font-family: Inter-Regular, serif;
   font-size: 16px;
   color: #3C4144;
   align-items: center;
   justify-content: center;
   display: flex;
-}
-
-.table-component-group {
 }
 
 .table-component-group-header {
@@ -503,13 +531,18 @@ export default {
 
 .table-component-group-row {
   display: flex;
+  transition: background-color 0.5s linear;
+}
+
+.table-component-group-row:hover {
+  cursor: pointer;
+  background-color: #C7C7C7;
 }
 
 .table-component-group-cell {
   min-width: 200px;
   max-width: 200px;
   height: 50px;
-  background-color: #FFFAEB;
   font-family: Inter-Regular, serif;
   font-size: 16px;
   color: #3C4144;
@@ -519,7 +552,7 @@ export default {
 }
 
 .fade-in-out-enter-active {
-  animation: fade-in 0.5s ease;
+  animation: fade-in 0.5s linear;
 }
 
 .fade-in-out-leave-to {
@@ -527,7 +560,7 @@ export default {
 }
 
 .fade-in-out-leave-active {
-  transition: opacity 0.5s ease;
+  transition: opacity 0.5s linear;
 }
 
 .flip-list-move {
