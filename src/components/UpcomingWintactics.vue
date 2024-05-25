@@ -1,7 +1,7 @@
 <template>
   <div id="upcoming-container">
     <div id="upcoming-content">
-      <span id="upcoming-number">05</span>
+      <span id="upcoming-number">{{ targetNumber }}</span>
       <span id="upcoming-text">Upcoming Wintactics</span>
       <div id="upcoming-due-container">
         <span id="upcoming-due-text">Due in the next 30 days</span>
@@ -12,9 +12,28 @@
 
 <script>
 import {defineComponent} from "vue";
+import gsap from 'gsap'
 
 export default defineComponent({
+  mounted() {
+    this.number = 5;
+  },
+
+  watch: {
+    number(newVal) {
+      gsap.to(this, { duration: 1, intermediate: Number(newVal) || 0 });
+    },
+  },
+
+  computed: {
+    targetNumber() {
+      return Math.round(this.intermediate).toString().padStart(2, '0');
+    }
+  },
+
   data: () => ({
+    number: 0,
+    intermediate: 99,
   }),
 
   methods: {

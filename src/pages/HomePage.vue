@@ -3,10 +3,10 @@
     <div id="content">
       <header-component/>
       <div id="home-cards">
-        <upcoming-card/>
+        <upcoming-wintactics/>
         <strategy-card/>
         <strategy-card/>
-        <engagement-card/>
+        <customer-engaged/>
       </div>
       <div id="tables-container">
         <table-header @openColumnConfiguration="openColumnConfiguration"/>
@@ -28,9 +28,9 @@
 </template>
 
 <script>
-import UpcomingCard from "@/components/UpcomingCard.vue";
+import UpcomingWintactics from "@/components/UpcomingWintactics.vue";
 import HeaderComponent from "@/components/HeaderComponent.vue";
-import EngagementCard from "@/components/EngagementCard.vue";
+import CustomerEngaged from "@/components/CustomerEngaged.vue";
 import StrategyCard from "@/components/MetricCard.vue";
 import TableComponent from "@/components/TableComponent.vue";
 import TableHeader from "@/components/TableHeader.vue";
@@ -41,7 +41,7 @@ export default {
   components: {
     FilterConfiguration,
     ColumnConfiguration,
-    TableHeader, TableComponent, StrategyCard, EngagementCard, HeaderComponent, UpcomingCard},
+    TableHeader, TableComponent, StrategyCard, CustomerEngaged, HeaderComponent, UpcomingWintactics},
 
   data: () => ({
     rows: [

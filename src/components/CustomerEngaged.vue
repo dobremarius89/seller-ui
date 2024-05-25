@@ -1,7 +1,7 @@
 <template>
   <div id="engagement-container">
     <div id="engagement-content">
-      <span id="engagement-number">{{ engagement }}%</span>
+      <span id="engagement-number">{{ targetValue }}%</span>
       <span id="engagement-text">Customer Engaged</span>
       <div id="stars-container">
         <div id="stars">
@@ -18,21 +18,38 @@
 
 <script>
 import {defineComponent} from "vue";
+import gsap from "gsap";
 
 export default defineComponent({
-  beforeMount() {
-    this.fillStars();
+  mounted() {
+    this.number = 98;
+  },
+
+  watch: {
+    number(newVal) {
+      gsap.to(this.$data, { duration: 1, intermediate: Number(newVal) || 0 });
+    },
+    intermediate() {
+      this.fillStars()
+    }
+  },
+
+  computed: {
+    targetValue() {
+      return Math.round(this.intermediate);
+    }
   },
 
   data: () => ({
     stars: [],
-    engagement: 33
+    number: 0,
+    intermediate: 0
   }),
 
   methods: {
     fillStars() {
-      let number = this.engagement;
-
+      let number = this.intermediate;
+      this.stars = [];
       for (let i = 0; i < 5; i++) {
         if (number >= 20) {
           this.stars.push(1);
