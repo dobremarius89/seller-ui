@@ -28,7 +28,9 @@
       <!-- Grouped rows -->
       <transition-group name="flip-list">
         <div v-for="(group, groupIndex) in groupedRows" :key="group.field + group.value">
-          <div class="table-component-group-header" @dblclick="toggleExpandGroup(groupIndex)">
+          <div class="table-component-group-header"
+               :style="{width: scrollableWidth}"
+               @dblclick="toggleExpandGroup(groupIndex)">
             <div class="table-component-group-name">
               <div class="table-component-group-text">{{ group.value }}</div>
               <div class="table-component-group-count">{{ group.count }}</div>
@@ -39,7 +41,10 @@
           </div>
           <div v-if="isExpanded(groupIndex)" class="table-component-group-rows">
             <transition-group name="flip-list">
-              <div v-for="row in group.rows" class="table-component-group-row" :key="row.customer + row.wintactic">
+              <div v-for="row in group.rows"
+                   class="table-component-group-row"
+                   :style="{width: scrollableWidth}"
+                   :key="row.customer + row.wintactic">
                 <div v-for="column in visibleColumns" class="table-component-group-cell" :key="column.field">
                   {{ row[column.field] }}
                 </div>
@@ -52,7 +57,9 @@
       <div v-if="!isGroupingActive">
         <transition-group name="flip-list">
           <div v-for="row in sortedFilteredRows" :key="row.customer + row.wintactic">
-            <div v-if="!shouldFilterRow(row)" class="table-component-body-row">
+            <div v-if="!shouldFilterRow(row)"
+                 class="table-component-body-row"
+                 :style="{width: scrollableWidth}">
               <div v-for="column in visibleColumns" class="table-component-body-cell" :key="column.field">
                 {{ row[column.field] }}
               </div>
@@ -81,6 +88,7 @@ export default {
 
   mounted() {
     this.addScrollListener();
+    this.computeScrollableWidth();
     eventBus.on("exportCsv", this.exportCsv);
     eventBus.on("exportXlsx", this.exportXlsx);
     eventBus.on("applyFilterConfiguration", this.applyFilter);
@@ -95,20 +103,6 @@ export default {
     eventBus.off("applyFilterConfiguration", this.applyFilter);
     eventBus.off("deleteFilterConfiguration", this.deleteFilter);
     eventBus.off("clearFilterConfiguration", this.clearFilters);
-  },
-
-  updated() {
-    //Update group header width to match the width of the header
-    //Update is running only when grouping is clicked and update width has not been performed
-    if (this.isGroupingActive && !this.groupHeaderWidthUpdated) {
-      const tableHeader = document.getElementById("table-component-header");
-      const groupHeaders = document.getElementsByClassName("table-component-group-header");
-      for (let i = 0; i < groupHeaders.length; i++) {
-        const header = groupHeaders[i];
-        header.style.width = tableHeader.scrollWidth + "px";
-      }
-      this.groupHeaderWidthUpdated = true;
-    }
   },
 
   watch: {
@@ -130,11 +124,11 @@ export default {
   data: () => ({
     groupedRows: [],
     sortedFilteredRows: [],
-    groupHeaderWidthUpdated: false,
-    shownColumFilter: null,
+    shownColumFilter: Boolean,
+    scrollableWidth: String,
     sortingColumn: {
-      column: null,
-      sorting: null
+      column: String,
+      sorting: String
     },
     filterColumns: [],
   }),
@@ -363,6 +357,10 @@ export default {
     },
     handleSynchronousScroll() {
       this.header.scrollLeft = this.content.scrollLeft;
+    },
+    computeScrollableWidth() {
+      const tableHeader = document.getElementById("table-component-header");
+      this.scrollableWidth = tableHeader.scrollWidth + "px"
     }
   }
 }
