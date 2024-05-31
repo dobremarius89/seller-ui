@@ -50,15 +50,17 @@ export default {
 
   computed: {
     distinctValues() {
-      return this.filterValues.values;
+      return new Set([...this.filterValues.checked, ...this.filterValues.unchecked]);
     },
     isAllChecked() {
-      return this.selectedValues.length === this.distinctValues.length && this.selectedValues.length > 0
+      return this.uncheckedValues.size === 0
     }
   },
 
   data: () => ({
     searchText: null,
+    checkedValues: [],
+    uncheckedValues: [],
     selectedValues: [],
     updatedColumns: [],
     filteredValues: [],
@@ -67,8 +69,10 @@ export default {
   methods: {
     initFilterConfiguration() {
       this.searchText = null;
-      this.filteredValues = [...this.distinctValues];
-      this.selectedValues = [...this.filterValues.selected];
+      this.filteredValues = new Set([...this.distinctValues]);
+      this.selectedValues = new Set(this.filterValues.selected);
+      this.checkedValues = new Set(this.filterValues.checked);
+      this.uncheckedValues = new Set(this.filterValues.unchecked);
     },
     closeFilterConfiguration() {
       this.$emit("closeFilterConfiguration");
@@ -79,38 +83,44 @@ export default {
       } else {
         eventBus.emit("applyFilterConfiguration", {
           column: this.filterValues.column,
-          selected: this.selectedValues,
-          values: this.filterValues.values
+          selected: this.checkedValues,
+          checked: this.checkedValues,
+          unchecked: this.uncheckedValues
         });
       }
       this.closeFilterConfiguration();
     },
     searchValue() {
       if (this.searchText) {
-        this.filteredValues = this.distinctValues.filter(value => value.toLocaleLowerCase().startsWith(this.searchText.toLowerCase()));
+        this.filteredValues = Array
+            .from(this.distinctValues)
+            .filter(value => value.toLocaleLowerCase().includes(this.searchText.toLowerCase()));
       } else {
         this.filteredValues = [...this.distinctValues];
       }
     },
     checkOrUncheckAllValues() {
       if (!this.isAllChecked) {
-        this.selectedValues = [...this.distinctValues];
+        this.checkedValues = new Set([...this.distinctValues]);
+        this.uncheckedValues = new Set();
       } else {
-        this.selectedValues = [];
+        this.checkedValues = new Set();
+        this.uncheckedValues = new Set([...this.distinctValues]);
       }
     },
     shouldCheckBox(value) {
-      return this.selectedValues.findIndex(val => val === value) !== -1;
+      return this.checkedValues.has(value);
     },
     shouldCheckSelectAll() {
       return this.isAllChecked;
     },
     checkOrUncheckValue(value) {
-      const index = this.selectedValues.findIndex(val => val === value);
-      if (index !== -1) {
-        this.selectedValues.splice(index, 1);
+      if (this.shouldCheckBox(value)) {
+        this.checkedValues.delete(value);
+        this.uncheckedValues.add(value);
       } else {
-        this.selectedValues.push(value);
+        this.uncheckedValues.delete(value);
+        this.checkedValues.add(value);
       }
     }
   }

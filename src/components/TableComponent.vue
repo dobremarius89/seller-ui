@@ -271,32 +271,69 @@ export default {
       }
     },
     openFilter(column, event) {
-      /* Search in the array and retrieve the index
+      /* Search in the array and retrieve the index and get all possible distinct values
       * If the index does not exist, initialize and emit the event
       * Else, send the filter as it is stored */
-      let index = this.filterColumns.findIndex(col => col.column === column.field);
-      if (index === -1) {
-        const values = this.getDistinctValues(column);
+      const index = this.filterColumns.findIndex(col => col.column === column.field);
+      const values = this.getDistinctValues(column);
+      if (index !== -1) {
+        this.filterColumns[index].checked = this.updateCheckedValues(this.filterColumns[index].selected, values);
+        this.filterColumns[index].unchecked = this.updateUncheckedValues(values, this.filterColumns[index].checked);
+        this.$emit("openFilterConfiguration", this.filterColumns[index]);
+      } else {
         this.$emit("openFilterConfiguration", {
           column: column.field,
-          values: values,
+          unchecked: [],
+          checked: values,
           selected: values
         });
-      } else {
-        this.$emit("openFilterConfiguration", this.filterColumns[index]);
       }
       event.stopPropagation();
     },
+    updateCheckedValues(firstSet, secondSet) {
+      const remainingSet = new Set();
+      firstSet.forEach(value => {
+        if (secondSet.has(value)) {
+          remainingSet.add(value)
+        }
+      })
+      return remainingSet;
+    },
+    updateUncheckedValues(firstSet, secondSet) {
+      const remainingSet = new Set;
+      firstSet.forEach(value => {
+        if (!secondSet.has(value)) {
+          remainingSet.add(value)
+        }
+      })
+      return remainingSet;
+    },
     getDistinctValues(column) {
-      return [...new Set(this.sortedFilteredRows.map(row => row[column.field]))];
+      let tmpSortedFilteredRows = [...this.sortedFilteredRows];
+      this.filterColumns.forEach(filter => {
+        if (filter.column !== column.field) {
+          tmpSortedFilteredRows = tmpSortedFilteredRows.filter(row => {
+            return filter.selected.has(row[filter.column]);
+          });
+        }
+      });
+      return new Set(tmpSortedFilteredRows.map(row => row[column.field]))
     },
     applyFilter(selectedValues) {
       const index = this.filterColumns.findIndex(val => val.column === selectedValues.column);
       if (index !== -1) {
         this.filterColumns[index].selected = selectedValues.selected;
+        this.filterColumns[index].checked = selectedValues.checked;
+        this.filterColumns[index].unchecked = selectedValues.unchecked;
       } else {
         this.filterColumns.push(selectedValues)
       }
+      this.filterColumns.forEach(filter => {
+        console.log(JSON.stringify(filter.column));
+        console.log(filter.selected);
+        console.log(filter.checked);
+        console.log(filter.unchecked);
+      });
     },
     deleteFilter(column) {
       const index = this.filterColumns.findIndex(val => val.column === column);
@@ -307,7 +344,7 @@ export default {
     },
     shouldFilterRow(row) {
       return this.filterColumns.some(filter => {
-        return filter.selected.indexOf(row[filter.column]) === -1;
+        return !filter.selected.has(row[filter.column]);
       });
     },
     exportXlsx() {

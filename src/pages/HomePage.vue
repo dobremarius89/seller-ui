@@ -12,7 +12,6 @@
         <table-header @openColumnConfiguration="openColumnConfiguration"/>
         <table-component :columns="columns"
                          :rows="rows"
-                         :filterValues="filterValues"
                          @openFilterConfiguration="openFilterConfiguration"/>
         <column-configuration v-if="isColumnConfigurationOpened"
                               :columns="columns"
