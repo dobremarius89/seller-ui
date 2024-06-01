@@ -56,8 +56,8 @@
       <!-- Ungrouped rows -->
       <div v-if="!isGroupingActive">
         <transition-group name="flip-list">
-          <div v-for="row in sortedFilteredRows" :key="row.customer + row.wintactic">
-            <div v-if="!shouldFilterRow(row)"
+          <div v-for="row in rows" :key="row.customer + row.wintactic">
+            <div v-if="!isRowFiltered(row)"
                  class="table-component-body-row"
                  :style="{width: scrollableWidth}">
               <div v-for="column in visibleColumns" class="table-component-body-cell" :key="column.field">
@@ -80,10 +80,6 @@ import * as XLSX from "xlsx";
 export default {
   directives: {
     dragscroll
-  },
-
-  beforeMount() {
-    this.sortedFilteredRows = [...this.rows];
   },
 
   mounted() {
@@ -117,13 +113,241 @@ export default {
   },
 
   props: {
-    rows: Object,
     columns: Object
   },
 
   data: () => ({
+    rows: [
+      {
+        "customer": "Zellos Systems",
+        "wintactic": "Transform aaS",
+        "status": "Dismiss",
+        "tags": "#aas,#priority#2,#opex",
+        "action_date": "",
+        "start_date": "1-Jan-24",
+        "end_date": "31-Dec-24",
+        "strategy": "Pivot to aaS",
+        "unread_comments": 1,
+        "total_comments": 1
+      },
+      {
+        "customer": "Acme Inc",
+        "wintactic": "3D Engage",
+        "status": "Review",
+        "tags": "#3D,#Manuf,#x-sell",
+        "action_date": "1-Jun-24",
+        "start_date": "1-Jan-24",
+        "end_date": "31-Dec-24",
+        "strategy": "Acquire New Logos",
+        "unread_comments": 0,
+        "total_comments": 0
+      },
+      {
+        "customer": "Acme Inc",
+        "wintactic": "Hyper-care Upsell",
+        "status": "Review",
+        "tags": "#service,#priority_3",
+        "action_date": "",
+        "start_date": "1-Jan-24",
+        "end_date": "31-Dec-24",
+        "strategy": "Expand Footprint",
+        "unread_comments": 0,
+        "total_comments": 0
+      },
+      {
+        "customer": "Acme Inc",
+        "wintactic": "Renew Support",
+        "status": "Dismiss",
+        "tags": "#service,#priority_2",
+        "action_date": "1-Feb-24",
+        "start_date": "1-Jan-24",
+        "end_date": "31-Dec-24",
+        "strategy": "Retain",
+        "unread_comments": 0,
+        "total_comments": 2
+      },
+      {
+        "customer": "Acme Inc",
+        "wintactic": "Tech Refresh Printers",
+        "status": "Pursue",
+        "tags": "#retain,#priority_1,#traditional",
+        "action_date": "",
+        "start_date": "1-Jan-24",
+        "end_date": "31-Dec-24",
+        "strategy": "Improve Customer Lifetime Value",
+        "unread_comments": 3,
+        "total_comments": 8
+      },
+      {
+        "customer": "Acme Inc",
+        "wintactic": "Transform aaS",
+        "status": "Review",
+        "tags": "#aas,#priority#2,#opex",
+        "action_date": "",
+        "start_date": "1-Jan-24",
+        "end_date": "31-Dec-24",
+        "strategy": "Pivot to aaS",
+        "unread_comments": 1,
+        "total_comments": 5
+      },
+      {
+        "customer": "Astral",
+        "wintactic": "Tech Refresh Printers",
+        "status": "Dismiss",
+        "tags": "#retain,#priority_1,#traditional",
+        "action_date": "",
+        "start_date": "1-Jan-24",
+        "end_date": "31-Dec-24",
+        "strategy": "Improve Customer Lifetime Value",
+        "unread_comments": 0,
+        "total_comments": 0
+      },
+      {
+        "customer": "Astral",
+        "wintactic": "Transform aaS",
+        "status": "Pursue",
+        "tags": "#aas,#priority#2,#opex",
+        "action_date": "",
+        "start_date": "1-Jan-24",
+        "end_date": "31-Dec-24",
+        "strategy": "Pivot to aaS",
+        "unread_comments": 0,
+        "total_comments": 0
+      },
+      {
+        "customer": "Apex Ventures",
+        "wintactic": "Tech Refresh Printers",
+        "status": "Review",
+        "tags": "#retain,#priority_1,#traditional",
+        "action_date": "1-Jun",
+        "start_date": "1-Jan-24",
+        "end_date": "31-Dec-24",
+        "strategy": "Improve Customer Lifetime Value",
+        "unread_comments": 0,
+        "total_comments": 1
+      },
+      {
+        "customer": "Apex Ventures",
+        "wintactic": "Transform aaS",
+        "status": "Review",
+        "tags": "#aas,#priority#2,#opex",
+        "action_date": "1-Jun",
+        "start_date": "1-Jan-24",
+        "end_date": "31-Dec-24",
+        "strategy": "Pivot to aaS",
+        "unread_comments": 0,
+        "total_comments": 0
+      },
+      {
+        "customer": "Celestial Synthetics",
+        "wintactic": "3D Engage",
+        "status": "Review",
+        "tags": "#3D,#Manuf,#x-sell",
+        "action_date": "1-Jun",
+        "start_date": "1-Jan-24",
+        "end_date": "31-Dec-24",
+        "strategy": "Acquire New Logos",
+        "unread_comments": 0,
+        "total_comments": 1
+      },
+      {
+        "customer": "Celestial Synthetics",
+        "wintactic": "Renew Support",
+        "status": "Review",
+        "tags": "#service,#priority_2",
+        "action_date": "",
+        "start_date": "1-Jan-24",
+        "end_date": "31-Dec-24",
+        "strategy": "Retain",
+        "unread_comments": 0,
+        "total_comments": 0
+      },
+      {
+        "customer": "Cosmo Catalyst",
+        "wintactic": "Hyper-care Upsell",
+        "status": "Review",
+        "tags": "#service,#priority_3",
+        "action_date": "",
+        "start_date": "1-Jan-24",
+        "end_date": "31-Dec-24",
+        "strategy": "Expand Footprint",
+        "unread_comments": 0,
+        "total_comments": 0
+      },
+      {
+        "customer": "CyberPulse",
+        "wintactic": "Renew Support",
+        "status": "Review",
+        "tags": "#service,#priority_2",
+        "action_date": "",
+        "start_date": "1-Jan-24",
+        "end_date": "31-Dec-24",
+        "strategy": "Retain",
+        "unread_comments": 0,
+        "total_comments": 0
+      },
+      {
+        "customer": "CyberPulse",
+        "wintactic": "Tech Refresh Printers",
+        "status": "Review",
+        "tags": "#retain,#priority_1,#traditional",
+        "action_date": "",
+        "start_date": "1-Jan-24",
+        "end_date": "31-Dec-24",
+        "strategy": "Improve Customer Lifetime Value",
+        "unread_comments": 1,
+        "total_comments": 2
+      },
+      {
+        "customer": "CyberPulse",
+        "wintactic": "Transform aaS",
+        "status": "Pursue",
+        "tags": "#aas,#priority#2,#opex",
+        "action_date": "",
+        "start_date": "1-Jan-24",
+        "end_date": "31-Dec-24",
+        "strategy": "Pivot to aaS",
+        "unread_comments": 0,
+        "total_comments": 0
+      },
+      {
+        "customer": "Elysian Echo Systems",
+        "wintactic": "3D Engage",
+        "status": "Dismiss",
+        "tags": "#3D,#Manuf,#x-sell",
+        "action_date": "",
+        "start_date": "1-Jan-24",
+        "end_date": "31-Dec-24",
+        "strategy": "Acquire New Logos",
+        "unread_comments": 0,
+        "total_comments": 1
+      },
+      {
+        "customer": "Elysian Echo Systems",
+        "wintactic": "Hyper-care Upsell",
+        "status": "Dismiss",
+        "tags": "#service,#priority_3",
+        "action_date": "",
+        "start_date": "1-Jan-24",
+        "end_date": "31-Dec-24",
+        "strategy": "Expand Footprint",
+        "unread_comments": 0,
+        "total_comments": 0
+      },
+      {
+        "customer": "Elysian Echo Systems",
+        "wintactic": "Transform aaS",
+        "status": "Dismiss",
+        "tags": "#aas,#priority#2,#opex",
+        "action_date": "",
+        "start_date": "1-Jan-24",
+        "end_date": "31-Dec-24",
+        "strategy": "Pivot to aaS",
+        "unread_comments": 0,
+        "total_comments": 0
+      }
+    ],
     groupedRows: [],
-    sortedFilteredRows: [],
     shownColumFilter: Boolean,
     scrollableWidth: String,
     sortingColumn: {
@@ -138,35 +362,30 @@ export default {
       return this.columns.filter(column => column.hidden === false);
     },
     isGroupingActive() {
-      const column = getGroupingColum(this.columns)
-      return !!column;
+      return !!getGroupingColum(this.columns)
     }
   },
 
   methods: {
     initTable() {
       this.groupedRows = [];
-      this.isGroupingActive = false;
     },
     groupByColumn(columnField) {
-      const groupedData = {};
+      const groupedData = new Map();
       this.rows.forEach(obj => {
         const value = obj[columnField];
-        if (!groupedData[value]) {
-          groupedData[value] = {
+        if (!groupedData.has(value)) {
+          groupedData.set(value, {
             field: columnField,
             value: value,
             count: 0,
             rows: []
-          };
+          });
         }
-        groupedData[value].count++;
-        groupedData[value].rows.push(obj);
+        groupedData.get(value).count++;
+        groupedData.get(value).rows.push(obj);
       });
-      for (const value in groupedData) {
-        this.groupedRows.push(groupedData[value]);
-      }
-      this.isGroupingActive = true;
+      this.groupedRows = Array.from(groupedData.values());
     },
     toggleExpandGroup(index) {
       this.groupedRows[index].expanded = this.groupedRows[index].expanded !== true;
@@ -217,7 +436,7 @@ export default {
       }
     },
     sortRows() {
-      this.sortedFilteredRows.sort((first, second) => {
+      this.rows.sort((first, second) => {
         const firstValue = first[this.sortingColumn.column];
         const secondValue = second[this.sortingColumn.column];
         if (this.sortingColumn.sorting === "asc") {
@@ -309,15 +528,15 @@ export default {
       return remainingSet;
     },
     getDistinctValues(column) {
-      let tmpSortedFilteredRows = [...this.sortedFilteredRows];
+      let tmpRows = [...this.rows];
       this.filterColumns.forEach(filter => {
         if (filter.column !== column.field) {
-          tmpSortedFilteredRows = tmpSortedFilteredRows.filter(row => {
+          tmpRows = tmpRows.filter(row => {
             return filter.selected.has(row[filter.column]);
           });
         }
       });
-      return new Set(tmpSortedFilteredRows.map(row => row[column.field]))
+      return new Set(tmpRows.map(row => row[column.field]))
     },
     applyFilter(selectedValues) {
       const index = this.filterColumns.findIndex(val => val.column === selectedValues.column);
@@ -326,26 +545,29 @@ export default {
         this.filterColumns[index].checked = selectedValues.checked;
         this.filterColumns[index].unchecked = selectedValues.unchecked;
       } else {
-        this.filterColumns.push(selectedValues)
+        this.filterColumns.push(selectedValues);
       }
-      this.filterColumns.forEach(filter => {
-        console.log(JSON.stringify(filter.column));
-        console.log(filter.selected);
-        console.log(filter.checked);
-        console.log(filter.unchecked);
-      });
+      this.filterRows();
     },
     deleteFilter(column) {
       const index = this.filterColumns.findIndex(val => val.column === column);
-      this.filterColumns.splice(index, 1)
+      if (index !== -1) {
+        this.filterColumns.splice(index, 1)
+        this.filterRows();
+      }
     },
     clearFilters() {
       this.filterColumns = [];
+      this.filterRows();
     },
-    shouldFilterRow(row) {
-      return this.filterColumns.some(filter => {
-        return !filter.selected.has(row[filter.column]);
-      });
+    filterRows() {
+      this.rows.forEach(row => row.filtered =
+          this.filterColumns.some(filter => {
+            return !filter.selected.has(row[filter.column]);
+          }));
+    },
+    isRowFiltered(row) {
+      return row.filtered === true;
     },
     exportXlsx() {
       const headers = this.columns.map(column => column.field);
