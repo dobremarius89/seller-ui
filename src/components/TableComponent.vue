@@ -103,9 +103,12 @@ export default {
   watch: {
     columns() {
       const newGroupingColumn = this.columns.find(column => column.grouping === true);
-      if (newGroupingColumn && newGroupingColumn.field !== this.groupingColumn.field) {
-        this.groupingColumn = newGroupingColumn;
-        this.groupByColumn(newGroupingColumn)
+      if (newGroupingColumn) {
+        if (newGroupingColumn.field !== this.groupingColumn)
+        {
+          this.groupingColumn = newGroupingColumn.field;
+          this.groupByColumn(newGroupingColumn.field);
+        }
       } else {
         this.groupedRows = new Map();
         this.groupingColumn = "";
@@ -371,18 +374,20 @@ export default {
   methods: {
     groupByColumn(column) {
       const groupedData = new Map();
-      this.rows.forEach(obj => {
-        const value = obj[column.field];
+      this.rows
+          .filter(row => row.filtered !== true)
+          .forEach(row => {
+        const value = row[column];
         if (!groupedData.has(value)) {
           groupedData.set(value, {
-            field: column.field,
+            field: column,
             value: value,
             count: 0,
             rows: []
           });
         }
         groupedData.get(value).count++;
-        groupedData.get(value).rows.push(obj);
+        groupedData.get(value).rows.push(row);
       });
       this.groupedRows = groupedData;
     },
@@ -448,25 +453,29 @@ export default {
     sortGroups() {
       /* If sorting by grouping column */
       if (this.groupingColumn === this.sortingColumn.column) {
-        const groupedRows = [];
+        const expandedGroups = [];
+        /* Save expanded groups, collapse them, sort them and expand them with a delay */
         this.groupedRows.forEach(groupedRow => {
           if (groupedRow.expanded === true) {
-            groupedRows.push(groupedRow.value)
+            expandedGroups.push(groupedRow.value)
           }
           groupedRow.expanded = false;
         });
-        this.groupedRows.sort((first, second) => {
-          const firstValue = first.value;
-          const secondValue = second.value;
+        const sortedGroupedRows = new Map();
+        const sortedGroups = Array.from(this.groupedRows.keys()).sort((first, second) => {
           if (this.sortingColumn.sorting === "asc") {
-            return firstValue < secondValue ? -1 : (firstValue > secondValue ? 1 : 0);
+            return first < second ? -1 : (first > second ? 1 : 0);
           } else {
-            return firstValue > secondValue ? -1 : (firstValue < secondValue ? 1 : 0);
+            return first > second ? -1 : (first < second ? 1 : 0);
           }
         });
+        sortedGroups.forEach(group => {
+          sortedGroupedRows.set(group, this.groupedRows.get(group));
+        });
+        this.groupedRows = sortedGroupedRows;
         setTimeout(() => {
           this.groupedRows.forEach(groupedRow => {
-            groupedRows.forEach(row => {
+            expandedGroups.forEach(row => {
               if (row === groupedRow.value) {
                 groupedRow.expanded = true;
               }
@@ -550,14 +559,23 @@ export default {
         unchecked: selectedValues.unchecked
       })
       this.filterRows();
+      if (this.isGroupingActive) {
+        this.groupByColumn(this.groupingColumn);
+      }
     },
     deleteFilter(column) {
       this.filterColumns.delete(column);
       this.filterRows();
+      if (this.isGroupingActive) {
+        this.groupByColumn(this.groupingColumn);
+      }
     },
     clearFilters() {
       this.filterColumns = new Map();
       this.filterRows();
+      if (this.isGroupingActive) {
+        this.groupByColumn(this.groupingColumn);
+      }
     },
     filterRows() {
       this.rows.forEach(row => {
