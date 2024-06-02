@@ -348,7 +348,7 @@ export default {
         "total_comments": 0
       }
     ],
-    groupedRows: new Map,
+    groupedRows: new Map(),
     shownColumFilter: Boolean,
     scrollableWidth: String,
     sortingColumn: {
@@ -356,7 +356,7 @@ export default {
       sorting: String
     },
     groupingColumn: "",
-    filterColumns: [],
+    filterColumns: new Map(),
   }),
 
   computed: {
@@ -400,8 +400,7 @@ export default {
       this.shownColumFilter = null;
     },
     shouldShowFilter(column) {
-      const index = this.filterColumns.findIndex(val => val.column === column.field);
-      return index !== -1 || this.shownColumFilter === column.field;
+      return this.filterColumns.has(column.field) || this.shownColumFilter === column.field;
     },
     isSortedAsc(column) {
       if (this.sortingColumn.column === column.field) {
@@ -493,12 +492,18 @@ export default {
       /* Search in the array and retrieve the index and get all possible distinct values
       * If the index does not exist, initialize and emit the event
       * Else, send the filter as it is stored */
-      const index = this.filterColumns.findIndex(col => col.column === column.field);
       const values = this.getDistinctValues(column);
-      if (index !== -1) {
-        this.filterColumns[index].checked = this.updateCheckedValues(this.filterColumns[index].selected, values);
-        this.filterColumns[index].unchecked = this.updateUncheckedValues(values, this.filterColumns[index].checked);
-        this.$emit("openFilterConfiguration", this.filterColumns[index]);
+      if (this.filterColumns.has(column.field)) {
+        const value = this.filterColumns.get(column.field);
+        value.checked = this.updateCheckedValues(value.selected, values);
+        value.unchecked = this.updateUncheckedValues(values, value.checked);
+        this.filterColumns.set(column.field, value);
+        this.$emit("openFilterConfiguration", {
+          column: column.field,
+          unchecked: value.unchecked,
+          checked: value.checked,
+          selected: value.selected
+        });
       } else {
         this.$emit("openFilterConfiguration", {
           column: column.field,
@@ -515,56 +520,55 @@ export default {
         if (secondSet.has(value)) {
           remainingSet.add(value)
         }
-      })
+      });
       return remainingSet;
     },
     updateUncheckedValues(firstSet, secondSet) {
-      const remainingSet = new Set;
+      const remainingSet = new Set();
       firstSet.forEach(value => {
         if (!secondSet.has(value)) {
           remainingSet.add(value)
         }
-      })
+      });
       return remainingSet;
     },
     getDistinctValues(column) {
       let tmpRows = [...this.rows];
-      this.filterColumns.forEach(filter => {
-        if (filter.column !== column.field) {
+      for (const [filter, value] of this.filterColumns.entries()) {
+        if (filter !== column.field) {
           tmpRows = tmpRows.filter(row => {
-            return filter.selected.has(row[filter.column]);
+            return value.selected.has(row[filter]);
           });
         }
-      });
+      }
       return new Set(tmpRows.map(row => row[column.field]))
     },
     applyFilter(selectedValues) {
-      const index = this.filterColumns.findIndex(val => val.column === selectedValues.column);
-      if (index !== -1) {
-        this.filterColumns[index].selected = selectedValues.selected;
-        this.filterColumns[index].checked = selectedValues.checked;
-        this.filterColumns[index].unchecked = selectedValues.unchecked;
-      } else {
-        this.filterColumns.push(selectedValues);
-      }
+      this.filterColumns.set(selectedValues.column, {
+        selected: selectedValues.selected,
+        checked: selectedValues.checked,
+        unchecked: selectedValues.unchecked
+      })
       this.filterRows();
     },
     deleteFilter(column) {
-      const index = this.filterColumns.findIndex(val => val.column === column);
-      if (index !== -1) {
-        this.filterColumns.splice(index, 1)
-        this.filterRows();
-      }
+      this.filterColumns.delete(column);
+      this.filterRows();
     },
     clearFilters() {
-      this.filterColumns = [];
+      this.filterColumns = new Map();
       this.filterRows();
     },
     filterRows() {
-      this.rows.forEach(row => row.filtered =
-          this.filterColumns.some(filter => {
-            return !filter.selected.has(row[filter.column]);
-          }));
+      this.rows.forEach(row => {
+        for (const [column, filter] of this.filterColumns.entries()) {
+          if (!filter.selected.has(row[column])) {
+            row.filtered = true;
+            return;
+          }
+        }
+        row.filtered = false;
+      });
     },
     isRowFiltered(row) {
       return row.filtered === true;
