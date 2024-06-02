@@ -27,21 +27,21 @@
     <div v-dragscroll.x id="table-component-body">
       <!-- Grouped rows -->
       <transition-group name="flip-list">
-        <div v-for="(group, groupIndex) in groupedRows" :key="group.field + group.value">
+        <div v-for="[group, value] in groupedRows.entries()" :key="group">
           <div class="table-component-group-header"
                :style="{width: scrollableWidth}"
-               @dblclick="toggleExpandGroup(groupIndex)">
+               @dblclick="toggleExpandGroup(group)">
             <div class="table-component-group-name">
-              <div class="table-component-group-text">{{ group.value }}</div>
-              <div class="table-component-group-count">{{ group.count }}</div>
-              <img :class="{'table-component-group-arrow-up' : isExpanded(groupIndex)}"
+              <div class="table-component-group-text">{{ group }}</div>
+              <div class="table-component-group-count">{{ value.count }}</div>
+              <img :class="{'table-component-group-arrow-up' : isExpanded(group)}"
                    class="table-component-group-arrow"
                    src="@/assets/home/arrow_down.png"/>
             </div>
           </div>
-          <div v-if="isExpanded(groupIndex)" class="table-component-group-rows">
+          <div v-if="isExpanded(group)" class="table-component-group-rows">
             <transition-group name="flip-list">
-              <div v-for="row in group.rows"
+              <div v-for="row in value.rows"
                    class="table-component-group-row"
                    :style="{width: scrollableWidth}"
                    :key="row.customer + row.wintactic">
@@ -73,7 +73,6 @@
 
 <script>
 import {dragscroll} from "vue-dragscroll";
-import {getGroupingColum} from "@/utils/table-utils";
 import eventBus from "@/config/emitter.config";
 import * as XLSX from "xlsx";
 
@@ -102,12 +101,14 @@ export default {
   },
 
   watch: {
-    columns(updatedColumns) {
-      //todo check not to do the grouping if visibility changes or order of columns
-      this.initTable();
-      const groupingColumn = getGroupingColum(updatedColumns);
-      if (groupingColumn) {
-        this.groupByColumn(groupingColumn)
+    columns() {
+      const newGroupingColumn = this.columns.find(column => column.grouping === true);
+      if (newGroupingColumn && newGroupingColumn.field !== this.groupingColumn.field) {
+        this.groupingColumn = newGroupingColumn;
+        this.groupByColumn(newGroupingColumn)
+      } else {
+        this.groupedRows = new Map();
+        this.groupingColumn = "";
       }
     }
   },
@@ -347,13 +348,14 @@ export default {
         "total_comments": 0
       }
     ],
-    groupedRows: [],
+    groupedRows: new Map,
     shownColumFilter: Boolean,
     scrollableWidth: String,
     sortingColumn: {
       column: String,
       sorting: String
     },
+    groupingColumn: "",
     filterColumns: [],
   }),
 
@@ -362,21 +364,18 @@ export default {
       return this.columns.filter(column => column.hidden === false);
     },
     isGroupingActive() {
-      return !!getGroupingColum(this.columns)
+      return !!this.groupingColumn;
     }
   },
 
   methods: {
-    initTable() {
-      this.groupedRows = [];
-    },
-    groupByColumn(columnField) {
+    groupByColumn(column) {
       const groupedData = new Map();
       this.rows.forEach(obj => {
-        const value = obj[columnField];
+        const value = obj[column.field];
         if (!groupedData.has(value)) {
           groupedData.set(value, {
-            field: columnField,
+            field: column.field,
             value: value,
             count: 0,
             rows: []
@@ -385,13 +384,14 @@ export default {
         groupedData.get(value).count++;
         groupedData.get(value).rows.push(obj);
       });
-      this.groupedRows = Array.from(groupedData.values());
+      this.groupedRows = groupedData;
     },
-    toggleExpandGroup(index) {
-      this.groupedRows[index].expanded = this.groupedRows[index].expanded !== true;
+    toggleExpandGroup(group) {
+      const expanded = this.groupedRows.get(group).expanded;
+      this.groupedRows.get(group).expanded = expanded !== true;
     },
-    isExpanded(index) {
-      return this.groupedRows[index].expanded === true;
+    isExpanded(group) {
+      return this.groupedRows.get(group).expanded === true;
     },
     showColumnFilter(column) {
       this.shownColumFilter = column.field;
@@ -448,7 +448,7 @@ export default {
     },
     sortGroups() {
       /* If sorting by grouping column */
-      if (getGroupingColum(this.columns) === this.sortingColumn.column) {
+      if (this.groupingColumn === this.sortingColumn.column) {
         const groupedRows = [];
         this.groupedRows.forEach(groupedRow => {
           if (groupedRow.expanded === true) {
