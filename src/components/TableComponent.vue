@@ -658,10 +658,6 @@ export default {
   height: calc(100vh - 100px - 45px - 226px - 55px - 40px - 40px - 40px);
 }
 
-#table-component-body::-webkit-scrollbar {
-  display: none;
-}
-
 #table-component-header {
   overflow: hidden;
   display: flex;
