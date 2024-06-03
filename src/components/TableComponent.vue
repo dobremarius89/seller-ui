@@ -352,6 +352,7 @@ export default {
       }
     ],
     groupedRows: new Map(),
+    expandedGroups: new Set(),
     shownColumFilter: Boolean,
     scrollableWidth: String,
     sortingColumn: {
@@ -392,11 +393,14 @@ export default {
       this.groupedRows = groupedData;
     },
     toggleExpandGroup(group) {
-      const expanded = this.groupedRows.get(group).expanded;
-      this.groupedRows.get(group).expanded = expanded !== true;
+      if (this.expandedGroups.has(group)) {
+        this.expandedGroups.delete(group);
+      } else {
+        this.expandedGroups.add(group);
+      }
     },
     isExpanded(group) {
-      return this.groupedRows.get(group).expanded === true;
+      return this.expandedGroups.has(group);
     },
     showColumnFilter(column) {
       this.shownColumFilter = column.field;
@@ -432,7 +436,6 @@ export default {
         this.sortingColumn.sorting = "asc";
       }
       this.sortingColumn.column = column.field;
-
       if (this.isGroupingActive) {
         this.sortGroups();
       } else {
@@ -453,14 +456,9 @@ export default {
     sortGroups() {
       /* If sorting by grouping column */
       if (this.groupingColumn === this.sortingColumn.column) {
-        const expandedGroups = [];
-        /* Save expanded groups, collapse them, sort them and expand them with a delay */
-        this.groupedRows.forEach(groupedRow => {
-          if (groupedRow.expanded === true) {
-            expandedGroups.push(groupedRow.value)
-          }
-          groupedRow.expanded = false;
-        });
+        /* Store the expanded groups, collapse them, sort them and expand them with a delay */
+        const expandedGroups = new Set(this.expandedGroups);
+        this.expandedGroups = new Set();
         const sortedGroupedRows = new Map();
         const sortedGroups = Array.from(this.groupedRows.keys()).sort((first, second) => {
           if (this.sortingColumn.sorting === "asc") {
@@ -473,15 +471,7 @@ export default {
           sortedGroupedRows.set(group, this.groupedRows.get(group));
         });
         this.groupedRows = sortedGroupedRows;
-        setTimeout(() => {
-          this.groupedRows.forEach(groupedRow => {
-            expandedGroups.forEach(row => {
-              if (row === groupedRow.value) {
-                groupedRow.expanded = true;
-              }
-            });
-          })
-        }, 500);
+        setTimeout(() => this.expandedGroups = expandedGroups, 500);
         /* Else, sorting by any other column */
       } else {
         this.groupedRows.forEach(groupedRow => {
