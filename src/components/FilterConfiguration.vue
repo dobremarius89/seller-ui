@@ -7,18 +7,18 @@
           <label id="filter-select-all" @click="checkOrUncheckAllValues">Select all</label>
       </div>
       <div id="filter-search-bar">
-        <input id="filter-search" v-model="searchText" placeholder="Search..." @input="searchValue"/>
+        <input id="filter-search" v-model="searchText" placeholder="Search..." @input="searchFilter"/>
       </div>
       <div v-dragscroll.y id="filter-rows">
         <transition-group name="flip-list" tag="div">
-          <div v-for="value in filteredValues" :key="value">
-            <div class="filter-row">
-              <input :checked="shouldCheckBox(value)"
-                     :value="value"
+          <div v-for="filter in filteredValues" :key="filter.value">
+            <div v-if="filter.filtered !== true" class="filter-row">
+              <input :checked="shouldCheckBox(filter.value)"
+                     :value="filter.value"
                      class="filter-checkbox"
-                     @input="checkOrUncheckValue(value)"
+                     @input="checkOrUncheckValue(filter.value)"
                      type="checkbox">
-              <label class="filter-row-text" @click="checkOrUncheckValue(value)">{{ value }}</label>
+              <label class="filter-row-text" @click="checkOrUncheckValue(filter.value)">{{ filter.value }}</label>
             </div>
           </div>
         </transition-group>
@@ -69,7 +69,10 @@ export default {
   methods: {
     initFilterConfiguration() {
       this.searchText = null;
-      this.filteredValues = new Set([...this.distinctValues]);
+      this.filteredValues = Array.from(this.distinctValues).map(val => ({
+        value: val,
+        filtered: false
+      }));
       this.selectedValues = new Set(this.filterValues.selected);
       this.checkedValues = new Set(this.filterValues.checked);
       this.uncheckedValues = new Set(this.filterValues.unchecked);
@@ -90,13 +93,15 @@ export default {
       }
       this.closeFilterConfiguration();
     },
-    searchValue() {
+    searchFilter() {
       if (this.searchText) {
-        this.filteredValues = Array
-            .from(this.distinctValues)
-            .filter(value => value.toLocaleLowerCase().includes(this.searchText.toLowerCase()));
+        this.filteredValues.forEach(filter => {
+          filter.filtered = !filter.value.toString().toLowerCase().includes(this.searchText.toLowerCase());
+        });
       } else {
-        this.filteredValues = [...this.distinctValues];
+        this.filteredValues.forEach(filter => {
+          filter.filtered = false;
+        });
       }
     },
     checkOrUncheckAllValues() {

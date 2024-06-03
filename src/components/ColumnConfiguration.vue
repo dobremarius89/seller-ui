@@ -20,7 +20,7 @@
                 <img v-if="isGroupingColumn(column)"
                      class="image-group"
                      src="../assets/column/group.png"
-                     @click="unGroupColumn(column)">
+                     @click="ungroupColumn(column)">
                 <img :class="{'image-disabled' : isGroupingColumn(column) || shouldDisableMovingUp(column)}"
                      class="image-arrow" src="@/assets/common/arrow_up.png"
                      @click="shiftColumn(column, 'left')">
@@ -100,7 +100,7 @@ export default {
         configurationRows.scrollTop = 0;
       }
     },
-    unGroupColumn(column) {
+    ungroupColumn(column) {
       this.groupingColumn = null;
       column.grouping = false;
     },
@@ -156,7 +156,7 @@ export default {
     searchColumn() {
       if (this.searchText) {
         this.updatedColumns.forEach(column => {
-          column.filtered = !column.field.toLocaleLowerCase().startsWith(this.searchText.toLowerCase());
+          column.filtered = !column.field.toLowerCase().includes(this.searchText.toLowerCase());
         });
       } else {
         this.updatedColumns.forEach(column => column.filtered = false);

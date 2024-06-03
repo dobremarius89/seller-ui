@@ -540,7 +540,10 @@ export default {
           });
         }
       }
-      return new Set(tmpRows.map(row => row[column.field]))
+      return new Set(tmpRows
+          .map(row => row[column.field])
+          .sort((first, second) => first.toString().localeCompare(second))
+      );
     },
     applyFilter(selectedValues) {
       this.filterColumns.set(selectedValues.column, {
