@@ -1,8 +1,8 @@
 <template>
-  <button :class="{'clicked' : clicked}" class="button" @click="handleClick">
-    <img class="image" :src="src">
-    <label v-if="text" class="text">{{ text }}</label>
-    <img v-if="hasArrows" :class="{'arrow-up' : clicked}" class="arrow" src="@/assets/home/arrow_down.png">
+  <button :class="{'clicked' : clicked, [dropdownClass]: !!dropdownClass}" class="button" @click="handleClick">
+    <img :class="{[dropdownClass]: !!dropdownClass}" class="image" :src="src">
+    <label :class="{[dropdownClass]: !!dropdownClass}" v-if="text" class="text">{{ text }}</label>
+    <img v-if="hasArrows" :class="{'arrow-up' : clicked, [dropdownClass]: !!dropdownClass}" class="arrow" src="@/assets/home/arrow_down.png">
   </button>
 </template>
 
@@ -12,7 +12,8 @@ export default {
     clicked: Boolean,
     text: String,
     src: String,
-    hasArrows: Boolean
+    hasArrows: Boolean,
+    dropdownClass: String
   },
 
   methods: {
@@ -55,6 +56,7 @@ export default {
   font-size: 18px;
   color: black;
   font-family: Inter-SemiBold, serif;
+  cursor: pointer;
 }
 
 .button:hover {

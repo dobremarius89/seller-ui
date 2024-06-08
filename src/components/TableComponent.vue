@@ -4,16 +4,17 @@
       <div v-for="column in visibleColumns"
            class="table-component-header-cell"
            :key="column.field"
-           @click="sort(column)"
            @mouseenter="showColumnFilter(column)"
            @mouseleave="hideColumnFilter(column)">
         <div :class="{'table-header-text-animation' : shouldShowFilter(column)}" class="table-component-header-text">
           <span>{{ column.name }}</span>
         </div>
-        <div :class="{'table-header-sort-animation-move' : shouldShowFilter(column)}" class="table-header-sort-image">
+        <div :class="{'table-header-sort-animation-move' : shouldShowFilter(column)}"
+             class="table-header-sort-image"
+             :style="{opacity: isSorted(column) || shouldShowFilter(column) ? 1 : 0}"
+             @click="sort(column)">
           <transition name="fade-in-out">
             <img :class="{'table-header-sort-animation-rotate' : isSortedAsc(column)}"
-                 :style="{opacity: isSortedAsc(column) || isSortedDesc(column) ? '1' : '0'}"
                  src="@/assets/table/arrow_up.png"/>
           </transition>
         </div>
@@ -56,10 +57,12 @@
       <!-- Ungrouped rows -->
       <div v-if="!isGroupingActive">
         <transition-group name="flip-list">
-          <div v-for="row in rows" :key="row.customer + row.wintactic">
+          <div v-for="row in rows" :key="getRowKey(row)">
             <div v-if="!isRowFiltered(row)"
+                 :class="{'table-component-body-row-selected' : isRowSelected(getRowKey(row))}"
                  class="table-component-body-row"
-                 :style="{width: scrollableWidth}">
+                 :style="{width: scrollableWidth}"
+                 @click="selectOrDeselectRow(row, $event)">
               <div v-for="column in visibleColumns" class="table-component-body-cell" :key="column.field">
                 {{ row[column.field] }}
               </div>
@@ -89,6 +92,8 @@ export default {
     eventBus.on("applyFilterConfiguration", this.applyFilter);
     eventBus.on("deleteFilterConfiguration", this.deleteFilter);
     eventBus.on("clearFilterConfiguration", this.clearFilters);
+    /* Emit an event and send the first row from table (as default selection) without selecting it */
+    this.$emit("selectRows", new Map([[this.getRowKey(this.rows[0]), this.rows[0]]]));
   },
 
   beforeUnmount() {
@@ -352,6 +357,7 @@ export default {
       }
     ],
     groupedRows: new Map(),
+    selectedRows: new Map(),
     expandedGroups: new Set(),
     shownColumFilter: Boolean,
     scrollableWidth: String,
@@ -425,6 +431,9 @@ export default {
         return false;
       }
     },
+    isSorted(column) {
+      return this.isSortedAsc(column) || this.isSortedDesc(column);
+    },
     sort(column) {
       if (this.sortingColumn.column === column.field) {
         if (this.sortingColumn.sorting === "asc") {
@@ -487,7 +496,7 @@ export default {
         });
       }
     },
-    openFilter(column, event) {
+    openFilter(column) {
       /* Search in the array and retrieve the index and get all possible distinct values
       * If the index does not exist, initialize and emit the event
       * Else, send the filter as it is stored */
@@ -511,7 +520,6 @@ export default {
           selected: values
         });
       }
-      event.stopPropagation();
     },
     updateCheckedValues(firstSet, secondSet) {
       const remainingSet = new Set();
@@ -635,6 +643,26 @@ export default {
     computeScrollableWidth() {
       const tableHeader = document.getElementById("table-component-header");
       this.scrollableWidth = tableHeader.scrollWidth + "px"
+    },
+    selectOrDeselectRow(row, event) {
+      const key = this.getRowKey(row);
+      if (event.metaKey || event.ctrlKey) {
+        if (this.isRowSelected(key)) {
+          this.selectedRows.delete(key);
+        } else {
+          this.selectedRows.set(key, row);
+        }
+      } else {
+        this.selectedRows = new Map();
+        this.selectedRows.set(key, row);
+      }
+      this.$emit("selectRows", this.selectedRows);
+    },
+    isRowSelected(key) {
+      return this.selectedRows.has(key);
+    },
+    getRowKey(row) {
+      return row.customer + row.wintactic;
     }
   }
 }
@@ -644,9 +672,6 @@ export default {
 #table-component {
   /* Calculate high as 100vh minus headers, minus metrics, minus 3 margins */
   height: calc(100vh - 100px - 226px - 55px - 40px - 40px - 40px);
-  /* Table's width should match the left margin of header's search bar */
-  /* Calculate width as 60%* of total width, including left margin */
-  width: calc((100% + 2 * 60px) * 0.6);
   overflow-x: hidden;
   overflow-y: auto;
   background-color: #FFFAEB;
@@ -674,7 +699,7 @@ export default {
   display: grid;
   grid-template-columns: 1fr 25px 30px;
   grid-gap: 0;
-  cursor: pointer;
+  cursor: default;
 }
 
 .table-component-header-cell:not(:last-child) {
@@ -698,7 +723,8 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  transition: transform 0.5s ease;
+  transition: all 0.5s ease;
+  cursor: pointer;
 }
 
 .table-header-sort-image img {
@@ -714,7 +740,6 @@ export default {
 }
 
 .table-header-filter-image {
-  /* Adjust margins from grid directly, not in this class */
   margin-right: auto;
   display: flex;
   justify-content: center;
@@ -730,9 +755,16 @@ export default {
 .table-component-body-row {
   display: flex;
   transition: background-color 0.5s linear;
+  user-select: none;
 }
 
 .table-component-body-row:hover {
+  cursor: pointer;
+  background-color: #C7C7C7;
+}
+
+.table-component-body-row-selected {
+  @extend .table-component-body-row
   cursor: pointer;
   background-color: #C7C7C7;
 }

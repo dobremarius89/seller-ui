@@ -151,7 +151,7 @@ export default {
       this.closeColumnConfiguration();
     },
     unClickColumnButton() {
-      eventBus.emit("unClickColumnButton", "3");
+      eventBus.emit("unClickColumnButton");
     },
     searchColumn() {
       if (this.searchText) {

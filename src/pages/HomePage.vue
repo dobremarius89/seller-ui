@@ -9,9 +9,12 @@
         <customer-engaged/>
       </div>
       <div id="tables-container">
-        <table-header @openColumnConfiguration="openColumnConfiguration"/>
-        <table-component :columns="columns"
+        <table-header style="grid-row: 1 / 2; grid-column: 1 / 2" @openColumnConfiguration="openColumnConfiguration"/>
+        <table-component style="grid-row: 2 / 3; grid-column: 1 / 2" :columns="columns"
+                         @selectRows="selectRows"
                          @openFilterConfiguration="openFilterConfiguration"/>
+        <story-component style="grid-row: 1 / 3; grid-column: 2 / 3"
+                         :selectedRows="selectedRows"/>
         <column-configuration v-if="isColumnConfigurationOpened"
                               :columns="columns"
                               :isColumnConfigurationOpened="isColumnConfigurationOpened"
@@ -34,12 +37,25 @@ import TableComponent from "@/components/TableComponent.vue";
 import TableHeader from "@/components/TableHeader.vue";
 import ColumnConfiguration from "@/components/ColumnConfiguration.vue";
 import FilterConfiguration from "@/components/FilterConfiguration.vue";
+import StoryComponent from "@/components/StoryComponent.vue";
+import eventBus from "@/config/emitter.config";
 
 export default {
   components: {
+    StoryComponent,
     FilterConfiguration,
     ColumnConfiguration,
-    TableHeader, TableComponent, StrategyCard, CustomerEngaged, HeaderComponent, UpcomingWintactics},
+    TableHeader,
+    TableComponent,
+    StrategyCard,
+    CustomerEngaged,
+    HeaderComponent,
+    UpcomingWintactics
+  },
+
+  beforeMount() {
+    document.addEventListener('click', this.closeDropdowns);
+  },
 
   data: () => ({
     columns: [
@@ -105,6 +121,7 @@ export default {
       }
     ],
     filterValues: [],
+    selectedRows: new Map(),
     isColumnConfigurationOpened: false,
     isFilterConfigurationOpened: false
   }),
@@ -125,6 +142,21 @@ export default {
     },
     applyColumnConfiguration(updatedColumns) {
       this.columns = updatedColumns;
+    },
+    selectRows(selectedRows) {
+      this.selectedRows = selectedRows;
+    },
+    closeDropdowns(event) {
+      const classes = new Set(event.target.classList);
+      if (!classes.has("help-dropdown") && !classes.has("user-dropdown")) {
+        eventBus.emit("closeHeaderDropdown");
+      }
+      if (!classes.has("update-dropdown")) {
+        eventBus.emit("closeUpdateDropdown");
+      }
+      if (!classes.has("status-dropdown")) {
+        eventBus.emit("closeStatusDropdown");
+      }
     }
   }
 }
@@ -146,5 +178,9 @@ export default {
 
 #tables-container {
   margin: 40px 60px 0 60px;
+  display: grid;
+  /* Table's width should match the left margin of header's search bar */
+  /* Calculate width as 60%* of total width, including left margin */
+  grid-template-columns: calc((100% + 2 * 60px) * 0.6) calc((100% + 2 * 60px) * 0.338);
 }
 </style>

@@ -1,8 +1,8 @@
 <template>
-  <button :class="{'clicked' : clicked, 'unClicked': !clicked}" class="button" @click="handleClick">
+  <button :class="{'clicked' : clicked, 'unClicked': !clicked, [dropdownClass]: !!dropdownClass}" class="button">
     {{ text }}
-    <img v-if="src" class="image" :src="src">
-    <img v-if="hasArrows" :class="{'arrow-up' : clicked}" class="arrow" src="@/assets/home/arrow_down.png">
+    <img v-if="src" :class="{[dropdownClass]: !!dropdownClass}" class="image" :src="src">
+    <img v-if="hasArrows" :class="{'arrow-up' : clicked, [dropdownClass]: !!dropdownClass}" class="arrow" src="@/assets/home/arrow_down.png">
   </button>
 </template>
 
@@ -12,12 +12,8 @@ export default {
     clicked: Boolean,
     text: String,
     src: String,
-    hasArrows: Boolean
-  },
-
-  methods: {
-    handleClick() {
-    }
+    hasArrows: Boolean,
+    dropdownClass: String
   }
 }
 </script>
@@ -53,7 +49,7 @@ export default {
 }
 
 .arrow {
-  margin-left: 3px;
+  margin-left: auto;
   scale: 65%;
   transition: transform 0.5s ease;
 }

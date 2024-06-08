@@ -11,24 +11,26 @@
       <div style="position: relative; display: inline-block;">
         <header-button :src="require('@/assets/home/bookmark.png')"
                        :clicked="clickedHeaderButton === 1"
-                       @click="clickButton(1, $event)"/>
+                       @click="clickButton(1)"/>
       </div>
       <div style="position: relative; display: inline-block;">
         <header-button :src="require('@/assets/home/help.png')"
+                       :dropdown-class="'help-dropdown'"
                        :clicked="clickedHeaderButton === 2"
-                       @click="clickButton(2, $event)"/>
+                       @click="clickButton(2)"/>
         <help-menu v-if="clickedHeaderButton === 2"/>
       </div>
         <header-button :src="require('@/assets/home/notification.png')"
                        :clicked="clickedHeaderButton === 3"
-                       @click="clickButton(3, $event)"/>
+                       @click="clickButton(3)"/>
       <div style="position: relative; display: inline-block;">
         <header-button :src="require('@/assets/home/portrait.png')"
+                       :dropdown-class="'user-dropdown'"
                        style="margin-right: 0"
                        :text="'marius.dobre'"
                        :clicked="clickedHeaderButton === 4"
                        :has-arrows="true"
-                       @click="clickButton(4, $event)"/>
+                       @click="clickButton(4)"/>
         <profile-menu v-if="clickedHeaderButton === 4"/>
       </div>
     </div>
@@ -45,19 +47,13 @@ import ProfileMenu from "@/components/ProfileMenu.vue";
 export default defineComponent({
   components: {ProfileMenu, HelpMenu, HeaderButton},
 
-  beforeMount() {
-    document.addEventListener('click', this.unClickButtonOverListener);
-  },
-
   mounted() {
-    eventBus.on("closeNonTableDropdowns", this.unClickButtonOverBus);
+    eventBus.on("closeHeaderDropdown", this.unClickButton);
   },
 
   beforeUnmount() {
-    eventBus.off("closeNonTableDropdowns", this.unClickButtonOverBus);
-    document.removeEventListener('click', this.unClickButtonOverListener);
+    eventBus.off("closeHeaderDropdown", this.unClickButton);
   },
-
 
   data: () => ({
     clickedHeaderButton: 0,
@@ -69,17 +65,12 @@ export default defineComponent({
   }),
 
   methods: {
-    clickButton(number, event) {
+    clickButton(number) {
       this.clickedHeaderButton = number;
-      eventBus.emit("closeNonHeaderDropdowns")
-      event.stopPropagation();
     },
-    unClickButtonOverListener() {
+    unClickButton() {
       this.clickedHeaderButton = 0;
     },
-    unClickButtonOverBus() {
-      this.clickedHeaderButton = 0;
-    }
   }
 })
 </script>

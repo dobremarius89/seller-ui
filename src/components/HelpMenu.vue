@@ -50,6 +50,7 @@ export default {
       } else {
         this.expandedTopic = topic;
       }
+      /* Disable closing the dropdown when expanding topic */
       event.stopPropagation();
     },
     isExpandedTopic(topic) {

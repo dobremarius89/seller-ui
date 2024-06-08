@@ -17,16 +17,17 @@
     <div id="functions">
       <div style="position: relative; display: inline-block;">
         <table-header-button :text="'Update'"
+                             :dropdown-class="'update-dropdown'"
                              :has-arrows="true"
                              :clicked="clickedHeaderButton === 1"
-                             @click="clickButton(1, $event)"/>
+                             @click="clickButton(1)"/>
         <update-menu v-if="clickedHeaderButton === 1"/>
       </div>
       <div style="position: relative; display: inline-block;">
         <table-header-button :text="'Export'"
                              :src="require('@/assets/home/download.png')"
                              :clicked="clickedHeaderButton === 2"
-                             @click="clickButton(2, $event)"/>
+                             @click="clickButton(2)"/>
         <export-menu v-if="clickedHeaderButton === 2"/>
       </div>
       <table-header-button :text="'Column'"
@@ -48,19 +49,14 @@ import ExportMenu from "@/components/ExportMenu.vue";
 export default {
   components: {ExportMenu, UpdateMenu, TableHeaderButton},
 
-  beforeMount() {
-    document.addEventListener('click', this.unClickButtonOverListener);
-  },
-
   mounted() {
-    eventBus.on("unClickColumnButton", this.unClickButtonOverBus);
-    eventBus.on("closeNonHeaderDropdowns", this.unClickButtonOverBus);
+    eventBus.on("closeUpdateDropdown", this.unClickButton);
+    eventBus.on("unClickColumnButton", this.unClickColumnButton);
   },
 
   beforeUnmount() {
-    eventBus.off("unClickColumnButton", this.unClickButtonOverBus);
-    eventBus.off("closeNonHeaderDropdowns", this.unClickButtonOverBus);
-    document.removeEventListener('click', this.unClickButtonOverListener);
+    eventBus.off("closeUpdateDropdown", this.unClickButton);
+    eventBus.off("unClickColumnButton", this.unClickColumnButton);
   },
 
   data: () => ({
@@ -72,18 +68,8 @@ export default {
     changeTab(tabNumber) {
       this.activeTab = tabNumber;
     },
-    clickButton(number, event) {
+    clickButton(number) {
       this.clickedHeaderButton = number;
-      eventBus.emit("closeNonTableDropdowns")
-      event.stopPropagation();
-    },
-    unClickButtonOverBus() {
-      this.clickedHeaderButton = 0;
-    },
-    unClickButtonOverListener() {
-      if (this.clickedHeaderButton !== 3) {
-        this.clickedHeaderButton = 0;
-      }
     },
     openColumnConfiguration() {
       this.clickedHeaderButton = 3;
@@ -91,6 +77,14 @@ export default {
     },
     clearAllFilters() {
       eventBus.emit("clearFilterConfiguration");
+    },
+    unClickButton() {
+      if (this.clickedHeaderButton !== 3) {
+        this.clickedHeaderButton = 0;
+      }
+    },
+    unClickColumnButton() {
+      this.clickedHeaderButton = 0;
     }
   }
 }
@@ -101,8 +95,6 @@ export default {
   display: flex;
   background-color: white;
   border-radius: 30px 30px 0 0;
-  /* Table's header width should match width of the table */
-  width: calc((100% + 2 * 60px) * 0.6);
 }
 
 #table-tabs {
