@@ -27,28 +27,28 @@ export default defineComponent({
 
   watch: {
     number(newVal) {
-      gsap.to(this.$data, { duration: 1, intermediate: Number(newVal) || 0 });
+      gsap.to(this.$data, { duration: 1, startingValue: Number(newVal) || 0 });
     },
-    intermediate() {
+    startingValue() {
       this.fillStars()
     }
   },
 
   computed: {
     targetValue() {
-      return Math.round(this.intermediate);
+      return Math.round(this.startingValue);
     }
   },
 
   data: () => ({
     stars: [],
     number: 0,
-    intermediate: 0
+    startingValue: 0
   }),
 
   methods: {
     fillStars() {
-      let number = this.intermediate;
+      let number = this.startingValue;
       this.stars = [];
       for (let i = 0; i < 5; i++) {
         if (number >= 20) {

@@ -6,9 +6,9 @@
         <th class="title">Total</th>
         <th/>
       </tr>
-      <tr v-for="(metric, index) in metrics" :key="index">
+      <tr v-for="(metric, index) in metrics" class="row-animation" :key="index">
         <td class="metric">{{ metric.name }}</td>
-        <td class="total">{{ metric.total}}</td>
+        <td class="total">{{ formatTotal(metric.total) }}</td>
         <td class="bar-cell">
           <div class="bar-empty">
             <div class="bar-full" :style="{width: metric.percent + '%'}"/>
@@ -21,39 +21,55 @@
 
 <script>
 import {defineComponent} from "vue";
+import gsap from 'gsap'
 
 export default defineComponent({
+  mounted() {
+    this.animateTotalValues();
+  },
+
   data: () => ({
     metrics: [
       {
         "name": "Retain",
-        "total": "54",
+        "total": 54,
         "percent": 32
       },
       {
         "name": "Expand footprint",
-        "total": "42",
+        "total": 42,
         "percent": 25
       },
       {
         "name": "Acquire New Logos",
-        "total": "39",
+        "total": 39,
         "percent": 21
       },
       {
         name: "Improve Customer IDontKnowWhat",
-        "total": "21",
+        "total": 21,
         "percent": 52
       },
       {
         "name": "Pivot to aaS",
-        "total": "05",
+        "total": 5,
         "percent": 73
       }
     ]
   }),
 
-  methods: {}
+  methods: {
+    formatTotal(total) {
+      return total.toString().padStart(2, '0');
+    },
+    animateTotalValues() {
+      gsap.fromTo(
+          ".row-animation",
+          { opacity: 0},
+          {opacity: 1, duration: 1, stagger: 0.1}
+      );
+    }
+  }
 })
 </script>
 
