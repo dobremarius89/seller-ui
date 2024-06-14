@@ -3,26 +3,54 @@
     <div id="insight-title">{{ insight.title }}</div>
     <div id="insight-summary">{{ insight.summary }}</div>
     <div v-dragscroll.x id="table-container">
-      <div id="table-header" :style="{width:adjustedWidth}">
+      <div id="table-header"
+           :style="{width: shouldCenterTable ? null : adjustedWidth, justifyContent: shouldCenterTable ? 'center': null}">
         <div v-for="column in insight.columns" class="table-header-cell" :key="column.field">
           <div class="table-header-text">
             <span>{{ column.name }}</span>
           </div>
         </div>
       </div>
-      <div id="table-body" :style="{width:adjustedWidth}">
-        <div v-for="row in insight.data" :key="row">
-          <div class="table-body-row">
-            <div v-for="column in insight.columns" class="table-body-cell" :key="column.field">
-              {{ row[column.field] }}
-            </div>
+      <ul id="table-body" :style="{width: shouldCenterTable ? null : adjustedWidth}">
+        <li v-for="row in insight.data"
+            class="table-body-row table-body-row-underline"
+            :style="{width: scrollableWidth, justifyContent: shouldCenterTable ? 'center': null}"
+            :key="row" >
+          <div v-for="column in insight.columns" class="table-body-cell" :key="column.field">
+            {{ row[column.field] }}
           </div>
-        </div>
-      </div>
+        </li>
+      </ul>
     </div>
     <div id="insight-footer">
-      <button id="button-export" @click="closeInsight">Export</button>
-      <button id="button-cancel" @click="closeInsight">Cancel</button>
+      <div id="insight-footer-pages">
+        <img class="table-page-arrow"
+            :class="{'image-disabled' : shouldDisableShiftAtStart}"
+             src="@/assets/story/double-arrow-left.png"
+            @click="shiftAtStart()"/>
+        <img class="table-page-arrow"
+            :class="{'image-disabled' : shouldDisableShiftLeft}"
+             src="@/assets/story/arrow-left.png"
+            @click="shiftPages(-1)"/>
+          <div v-for="pageNumber in pages"
+               :class="{'table-page-selected' : pageNumber === this.page}"
+               class="table-page"
+               :key="pageNumber" @click="selectPage(pageNumber)">
+            {{ pageNumber }}
+          </div>
+        <img class="table-page-arrow"
+            :class="{'image-disabled' : shouldDisableShiftRight}"
+             src="@/assets/story/arrow-right.png"
+             @click="shiftPages(1)"/>
+        <img class="table-page-arrow"
+            :class="{'image-disabled' : shouldDisableShiftAtEnd}"
+             src="@/assets/story/double-arrow-right.png"
+            @click="shiftAtEnd()"/>
+      </div>
+      <div style="margin-left: auto">
+        <button id="button-cancel" @click="closeInsight">Cancel</button>
+        <button id="button-export" @click="closeInsight">Export</button>
+      </div>
     </div>
   </div>
 </template>
@@ -36,23 +64,55 @@ export default {
   },
 
   mounted() {
-
+    this.computeScrollableWidth();
   },
 
   computed: {
     adjustedWidth() {
       const columns = this.insight.columns.length;
-      if (columns <= 3) {
-        return 3 * 200 + "px";
-      } else if (columns <= 7) {
+      if (columns <= this.minColumns) {
+        return (this.minColumns + 1) * 200 + "px";
+      } else if (columns <= this.maxColumns) {
         return columns * 200 + "px";
       } else {
-        return 7 * 200 + "px";
+        return this.maxColumns * 200 + "px";
       }
+    },
+    shouldCenterTable() {
+      return this.insight.columns.length < 3;
+    },
+    totalPages() {
+      return Math.ceil(this.insight.data.length / this.maxRowsPerPage);
+    },
+    pages() {
+      const endingPage = Math.min(this.totalPages, this.endingPage);
+      return Array.from({ length: endingPage - this.startingPage + 1 }, (_, i) => this.startingPage + i);
+    },
+    shouldDisableShiftAtStart() {
+      return this.pages[0] === 1;
+    },
+    shouldDisableShiftLeft() {
+      return this.pages[0] === 1;
+    },
+    shouldDisableShiftRight() {
+      return this.pages[this.pages.length - 1] === this.totalPages;
+    },
+    shouldDisableShiftAtEnd() {
+      return this.pages[this.pages.length - 1] === this.totalPages;
     }
   },
 
   data: () => ({
+    /* If the table contains less or equal than minColumns, adjust the width of the modal and center the table */
+    minColumns: 3,
+    /* If the table contains more or equal than maxColumns, adjust the width of the modal */
+    maxColumns: 7,
+    maxRowsPerPage: 1,
+    page: 1,
+    startingPage: 1,
+    /* Maximum number of pages to display */
+    endingPage: 5,
+    scrollableWidth: String,
     insight: {
       title: "3K end of support printers",
       summary: "List of printer assets for this customer purchased since 2005 and with support coming to an end in " +
@@ -67,30 +127,6 @@ export default {
         {
           field: "product_name",
           name: "Product Name"
-        },
-        {
-          field: "ship_date",
-          name: "Ship Date"
-        },
-        {
-          field: "support_type",
-          name: "Support Type"
-        },
-        {
-          field: "product_code",
-          name: "Product Code"
-        },
-        {
-          field: "product_name",
-          name: "Product Name"
-        },
-        {
-          field: "ship_date",
-          name: "Ship Date"
-        },
-        {
-          field: "support_type",
-          name: "Support Type"
         }
       ],
       data: [
@@ -179,7 +215,7 @@ export default {
           "support_type": "EoL Extension",
         },
         {
-          "product_code": "YSN12857",
+          "product_code": "YSN12368",
           "product_name": "Printer 3K 1640x",
           "ship_date": "01-Jun-2005",
           "support_type": "EoL Extension",
@@ -191,6 +227,26 @@ export default {
   methods: {
     closeInsight() {
       this.$emit("closeInsight");
+    },
+    computeScrollableWidth() {
+      const tableHeader = document.getElementById("table-header");
+      console.log(tableHeader.scrollWidth + "px");
+      this.scrollableWidth = tableHeader.scrollWidth + "px"
+    },
+    selectPage(page) {
+      this.page = page;
+    },
+    shiftPages(value) {
+      this.endingPage = this.endingPage + value;
+      this.startingPage = this.startingPage + value;
+    },
+    shiftAtEnd() {
+      this.startingPage = this.totalPages + this.startingPage - this.endingPage;
+      this.endingPage = this.totalPages;
+    },
+    shiftAtStart() {
+      this.endingPage = this.endingPage - this.startingPage + 1;
+      this.startingPage = 1;
     }
   }
 
@@ -199,7 +255,6 @@ export default {
 
 <style scoped>
 #insight-container {
-  max-height: 1100px;
   background-color: white;
   position: absolute;
   top: 50%;
@@ -268,11 +323,17 @@ export default {
   max-height: 795px;
   /* Set max width to include header and 15 rows */
   min-height: 295px;
+  padding: 0;
+  margin: 0;
 }
 
 .table-body-row {
   display: flex;
   user-select: none;
+}
+
+.table-body-row-underline:not(:last-child) {
+  border-bottom: 1px solid #D0D5DD;
 }
 
 .table-body-cell {
@@ -285,6 +346,35 @@ export default {
   align-items: center;
   justify-content: center;
   display: flex;
+}
+
+.table-page-arrow {
+  cursor: pointer;
+  transition: opacity 0.3s linear;
+}
+
+.image-disabled {
+  opacity: 0.25;
+  cursor: default;
+  pointer-events: none;
+}
+
+.table-page {
+  height: 40px;
+  width: 40px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: Inter-Regular, serif;
+  font-size: 16px;
+  color: #3C4144;
+  border-radius: 10px;
+  transition: background-color 0.3s linear;
+}
+
+.table-page-selected {
+  background-color: #FE8325;
 }
 
 #button-export {
@@ -316,6 +406,13 @@ export default {
 #insight-footer {
   padding: 30px 0 30px 0;
   display: flex;
-  flex-direction: row-reverse;
+  flex-direction: row;
+  user-select: none;
+}
+
+#insight-footer-pages {
+  margin-left: 20px;
+  display: flex;
+  align-items: center;
 }
 </style>
