@@ -1,55 +1,57 @@
 <template>
-  <div id="insight-container" :style="{width:adjustedWidth}">
-    <div id="insight-title">{{ insight.title }}</div>
-    <div id="insight-summary">{{ insight.summary }}</div>
-    <div v-dragscroll.x id="table-container">
-      <div id="table-header"
-           :style="{width: shouldCenterTable ? null : adjustedWidth, justifyContent: shouldCenterTable ? 'center': null}">
-        <div v-for="column in insight.columns" class="table-header-cell" :key="column.field">
-          <div class="table-header-text">
-            <span>{{ column.name }}</span>
-          </div>
-        </div>
-      </div>
-      <ul id="table-body" :style="{width: shouldCenterTable ? null : adjustedWidth, height: adjustedHeight}">
-        <li v-for="(row, index) in insight.data" :key="row"
-            :style="{width: scrollableWidth, justifyContent: shouldCenterTable ? 'center': null}">
-          <div v-if="isRowInPage(index)" class="table-body-row">
-            <div v-for="column in insight.columns" class="table-body-cell" :key="column.field">
-              {{ row[column.field] }}
+  <div id="modal">
+    <div id="insight-container" :style="{width:adjustedWidth}">
+      <div id="insight-title">{{ insight.title }}</div>
+      <div id="insight-summary">{{ insight.summary }}</div>
+      <div v-dragscroll.x id="table-container">
+        <div id="table-header"
+             :style="{width: shouldCenterTable ? null : adjustedWidth, justifyContent: shouldCenterTable ? 'center': null}">
+          <div v-for="column in insight.columns" class="table-header-cell" :key="column.field">
+            <div class="table-header-text">
+              <span>{{ column.name }}</span>
             </div>
           </div>
-        </li>
-      </ul>
-    </div>
-    <div id="insight-footer">
-      <div id="insight-footer-pages">
-        <img class="table-page-arrow"
-             :class="{'image-disabled' : shouldDisableShiftLeft}"
-             src="@/assets/story/double-arrow-left.png"
-             @click="shiftAtStart()"/>
-        <img class="table-page-arrow"
-             :class="{'image-disabled' : shouldDisableShiftLeft}"
-             src="@/assets/story/arrow-left.png"
-             @click="shiftPages(-1)"/>
-        <div v-for="pageNumber in pages"
-             :class="{'table-page-selected' : pageNumber === this.page}"
-             class="table-page"
-             :key="pageNumber" @click="selectPage(pageNumber)">
-          {{ pageNumber }}
         </div>
-        <img class="table-page-arrow"
-             :class="{'image-disabled' : shouldDisableShiftRight}"
-             src="@/assets/story/arrow-right.png"
-             @click="shiftPages(1)"/>
-        <img class="table-page-arrow"
-             :class="{'image-disabled' : shouldDisableShiftRight}"
-             src="@/assets/story/double-arrow-right.png"
-             @click="shiftAtEnd()"/>
+        <ul id="table-body" :style="{width: shouldCenterTable ? null : adjustedWidth, height: adjustedHeight}">
+          <li v-for="(row, index) in insight.data" :key="row"
+              :style="{width: scrollableWidth, justifyContent: shouldCenterTable ? 'center': null}">
+            <div v-if="isRowInPage(index)" class="table-body-row insight-row-animation">
+              <div v-for="column in insight.columns" class="table-body-cell" :key="column.field">
+                {{ row[column.field] }}
+              </div>
+            </div>
+          </li>
+        </ul>
       </div>
-      <div style="margin-left: auto">
-        <button id="button-cancel" @click="closeInsight">Cancel</button>
-        <button id="button-export" @click="closeInsight">Export</button>
+      <div id="insight-footer">
+        <div id="insight-footer-pages">
+          <img class="table-page-arrow"
+               :class="{'image-disabled' : shouldDisableShiftLeft}"
+               src="@/assets/story/double-arrow-left.png"
+               @click="shiftAtStart()"/>
+          <img class="table-page-arrow"
+               :class="{'image-disabled' : shouldDisableShiftLeft}"
+               src="@/assets/story/arrow-left.png"
+               @click="shiftPages(-1)"/>
+          <div v-for="pageNumber in pages"
+               :class="{'table-page-selected' : pageNumber === this.page}"
+               class="table-page"
+               :key="pageNumber" @click="selectPage(pageNumber)">
+            {{ pageNumber }}
+          </div>
+          <img class="table-page-arrow"
+               :class="{'image-disabled' : shouldDisableShiftRight}"
+               src="@/assets/story/arrow-right.png"
+               @click="shiftPages(1)"/>
+          <img class="table-page-arrow"
+               :class="{'image-disabled' : shouldDisableShiftRight}"
+               src="@/assets/story/double-arrow-right.png"
+               @click="shiftAtEnd()"/>
+        </div>
+        <div style="margin-left: auto">
+          <button id="button-cancel" @click="closeInsight">Cancel</button>
+          <button id="button-export" @click="closeInsight">Export</button>
+        </div>
       </div>
     </div>
   </div>
@@ -57,6 +59,7 @@
 
 <script>
 import {dragscroll} from "vue-dragscroll";
+import gsap from "gsap";
 
 export default {
   directives: {
@@ -65,6 +68,7 @@ export default {
 
   mounted() {
     this.computeScrollableWidth();
+    this.animateRows();
   },
 
   computed: {
@@ -262,7 +266,13 @@ export default {
       this.scrollableWidth = tableHeader.scrollWidth + "px"
     },
     selectPage(page) {
-      this.page = page;
+      if (page !== this.page) {
+        this.page = page;
+        /* If animation per page is wanted */
+        // this.$nextTick(() => {
+        //   this.animateRows();
+        // });
+      }
     },
     shiftPages(value) {
       this.endingPage = this.endingPage + value;
@@ -277,7 +287,14 @@ export default {
       this.startingPage = 1;
     },
     isRowInPage(index) {
-      return index <= (this.page * this.maxRowsPerPage -1) && index >= (this.page - 1) * this.maxRowsPerPage;
+      return index <= (this.page * this.maxRowsPerPage - 1) && index >= (this.page - 1) * this.maxRowsPerPage;
+    },
+    animateRows() {
+      gsap.fromTo(
+          ".insight-row-animation",
+          {opacity: 0},
+          {opacity: 1, duration: 1, stagger: 0.05}
+      );
     }
   }
 
@@ -285,6 +302,16 @@ export default {
 </script>
 
 <style scoped>
+#modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.75);
+  z-index: 1;
+}
+
 #insight-container {
   background-color: white;
   position: absolute;
@@ -293,7 +320,6 @@ export default {
   transform: translate(-50%, -50%);
   border-radius: 20px;
   border: 2px solid #EAECF0;
-  z-index: 1;
   display: flex;
   flex-direction: column;
 }
