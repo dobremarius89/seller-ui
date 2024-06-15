@@ -57,12 +57,12 @@
       <!-- Ungrouped rows -->
       <div v-if="!isGroupingActive">
         <transition-group name="flip-list">
-          <div v-for="row in rows" :key="getRowKey(row)">
+          <div v-for="(row, index) in rows" :key="getRowKey(row)">
             <div v-if="!isRowFiltered(row)"
                  :class="{'table-component-body-row-selected' : isRowSelected(getRowKey(row))}"
                  class="table-component-body-row"
                  :style="{width: scrollableWidth}"
-                 @click="selectOrDeselectRow(row, $event)">
+                 @click="selectOrDeselectRow(index, $event)">
               <div v-for="column in visibleColumns" class="table-component-body-cell" :key="column.field">
                 {{ row[column.field] }}
               </div>
@@ -92,8 +92,8 @@ export default {
     eventBus.on("applyFilterConfiguration", this.applyFilter);
     eventBus.on("deleteFilterConfiguration", this.deleteFilter);
     eventBus.on("clearFilterConfiguration", this.clearFilters);
-    /* Default select the first row */
-    this.selectOrDeselectRow(this.rows[0], {metaKey: true});
+    /* Default select the first row and reset all previous selections */
+    this.initializeSelectedRows()
   },
 
   beforeUnmount() {
@@ -113,6 +113,7 @@ export default {
         {
           this.groupingColumn = newGroupingColumn.field;
           this.groupByColumn(newGroupingColumn.field);
+          this.initializeSelectedRows();
         }
       } else {
         this.groupedRows = new Map();
@@ -358,6 +359,7 @@ export default {
     ],
     groupedRows: new Map(),
     selectedRows: new Map(),
+    selectedWithShiftRows: new Map(),
     expandedGroups: new Set(),
     shownColumFilter: Boolean,
     scrollableWidth: String,
@@ -367,6 +369,7 @@ export default {
     },
     groupingColumn: "",
     filterColumns: new Map(),
+    selectedRowKeyBeforeShift: String
   }),
 
   computed: {
@@ -644,25 +647,54 @@ export default {
       const tableHeader = document.getElementById("table-component-header");
       this.scrollableWidth = tableHeader.scrollWidth + "px"
     },
-    selectOrDeselectRow(row, event) {
+    selectOrDeselectRow(index, event) {
+      const row = this.rows[index];
       const key = this.getRowKey(row);
       if (event.metaKey || event.ctrlKey) {
+        this.selectedRows = new Map([...this.selectedRows, ...this.selectedWithShiftRows]);
+        this.selectedRowKeyBeforeShift = key;
         if (this.isRowSelected(key) && this.selectedRows.size > 1) {
           this.selectedRows.delete(key);
+          this.selectedWithShiftRows.delete(key)
         } else {
           this.selectedRows.set(key, row);
         }
+      } else if (event.shiftKey) {
+        const lastSelected = this.getIndexByKey(this.selectedRowKeyBeforeShift);
+        this.selectedWithShiftRows = new Map();
+        if (index > lastSelected) {
+          for (let i = lastSelected; i <= index; i++) {
+            const rowToAdd = this.rows[i];
+            this.selectedWithShiftRows.set(this.getRowKey(rowToAdd), rowToAdd);
+          }
+        }
+        if (index < lastSelected) {
+          for (let i = index; i <= lastSelected; i++) {
+            const rowToAdd = this.rows[i];
+            this.selectedWithShiftRows.set(this.getRowKey(rowToAdd), rowToAdd);
+          }
+        }
       } else {
+        this.selectedRowKeyBeforeShift = key;
+        this.selectedWithShiftRows = new Map();
         this.selectedRows = new Map();
         this.selectedRows.set(key, row);
       }
       this.$emit("selectRows", this.selectedRows);
     },
     isRowSelected(key) {
-      return this.selectedRows.has(key);
+      return this.selectedRows.has(key) || this.selectedWithShiftRows.has(key);
     },
     getRowKey(row) {
       return row.customer + row.wintactic;
+    },
+    getIndexByKey(key) {
+      return this.rows.findIndex(row => key === this.getRowKey(row));
+    },
+    initializeSelectedRows() {
+      this.selectedRows = new Map();
+      this.selectedWithShiftRows = new Map();
+      this.selectOrDeselectRow(0, {ctrlKey: true});
     }
   }
 }
@@ -760,7 +792,7 @@ export default {
 
 .table-component-body-row:hover {
   cursor: pointer;
-  background-color: #C7C7C7;
+  background-color: #EDEDED;
 }
 
 .table-component-body-row-selected {
