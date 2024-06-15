@@ -11,13 +11,13 @@
           </div>
         </div>
       </div>
-      <ul id="table-body" :style="{width: shouldCenterTable ? null : adjustedWidth}">
-        <li v-for="row in insight.data"
-            class="table-body-row table-body-row-underline"
-            :style="{width: scrollableWidth, justifyContent: shouldCenterTable ? 'center': null}"
-            :key="row" >
-          <div v-for="column in insight.columns" class="table-body-cell" :key="column.field">
-            {{ row[column.field] }}
+      <ul id="table-body" :style="{width: shouldCenterTable ? null : adjustedWidth, height: adjustedHeight}">
+        <li v-for="(row, index) in insight.data" :key="row"
+            :style="{width: scrollableWidth, justifyContent: shouldCenterTable ? 'center': null}">
+          <div v-if="isRowInPage(index)" class="table-body-row">
+            <div v-for="column in insight.columns" class="table-body-cell" :key="column.field">
+              {{ row[column.field] }}
+            </div>
           </div>
         </li>
       </ul>
@@ -25,27 +25,27 @@
     <div id="insight-footer">
       <div id="insight-footer-pages">
         <img class="table-page-arrow"
-            :class="{'image-disabled' : shouldDisableShiftAtStart}"
+             :class="{'image-disabled' : shouldDisableShiftLeft}"
              src="@/assets/story/double-arrow-left.png"
-            @click="shiftAtStart()"/>
+             @click="shiftAtStart()"/>
         <img class="table-page-arrow"
-            :class="{'image-disabled' : shouldDisableShiftLeft}"
+             :class="{'image-disabled' : shouldDisableShiftLeft}"
              src="@/assets/story/arrow-left.png"
-            @click="shiftPages(-1)"/>
-          <div v-for="pageNumber in pages"
-               :class="{'table-page-selected' : pageNumber === this.page}"
-               class="table-page"
-               :key="pageNumber" @click="selectPage(pageNumber)">
-            {{ pageNumber }}
-          </div>
+             @click="shiftPages(-1)"/>
+        <div v-for="pageNumber in pages"
+             :class="{'table-page-selected' : pageNumber === this.page}"
+             class="table-page"
+             :key="pageNumber" @click="selectPage(pageNumber)">
+          {{ pageNumber }}
+        </div>
         <img class="table-page-arrow"
-            :class="{'image-disabled' : shouldDisableShiftRight}"
+             :class="{'image-disabled' : shouldDisableShiftRight}"
              src="@/assets/story/arrow-right.png"
              @click="shiftPages(1)"/>
         <img class="table-page-arrow"
-            :class="{'image-disabled' : shouldDisableShiftAtEnd}"
+             :class="{'image-disabled' : shouldDisableShiftRight}"
              src="@/assets/story/double-arrow-right.png"
-            @click="shiftAtEnd()"/>
+             @click="shiftAtEnd()"/>
       </div>
       <div style="margin-left: auto">
         <button id="button-cancel" @click="closeInsight">Cancel</button>
@@ -78,6 +78,10 @@ export default {
         return this.maxColumns * 200 + "px";
       }
     },
+    adjustedHeight() {
+      /* Set width to include maxRowsPerPage */
+      return 51 * this.maxRowsPerPage + "px";
+    },
     shouldCenterTable() {
       return this.insight.columns.length < 3;
     },
@@ -86,18 +90,12 @@ export default {
     },
     pages() {
       const endingPage = Math.min(this.totalPages, this.endingPage);
-      return Array.from({ length: endingPage - this.startingPage + 1 }, (_, i) => this.startingPage + i);
-    },
-    shouldDisableShiftAtStart() {
-      return this.pages[0] === 1;
+      return Array.from({length: endingPage - this.startingPage + 1}, (_, i) => this.startingPage + i);
     },
     shouldDisableShiftLeft() {
       return this.pages[0] === 1;
     },
     shouldDisableShiftRight() {
-      return this.pages[this.pages.length - 1] === this.totalPages;
-    },
-    shouldDisableShiftAtEnd() {
       return this.pages[this.pages.length - 1] === this.totalPages;
     }
   },
@@ -107,7 +105,7 @@ export default {
     minColumns: 3,
     /* If the table contains more or equal than maxColumns, adjust the width of the modal */
     maxColumns: 7,
-    maxRowsPerPage: 1,
+    maxRowsPerPage: 15,
     page: 1,
     startingPage: 1,
     /* Maximum number of pages to display */
@@ -127,77 +125,71 @@ export default {
         {
           field: "product_name",
           name: "Product Name"
-        }
+        },
+        {
+          field: "ship_date",
+          name: "Ship Date"
+        },
+        {
+          field: "support_type",
+          name: "Support Type"
+        },
+        {
+          field: "ship_date",
+          name: "Ship Date"
+        },
+        {
+          field: "support_type",
+          name: "Support Type"
+        },
+        {
+          field: "ship_date",
+          name: "Ship Date"
+        },
+        {
+          field: "support_type",
+          name: "Support Type"
+        },
       ],
       data: [
         {
-          "product_code": "YSN38625",
+          "product_code": "YSN38621",
           "product_name": "Printer 3K 1640x",
           "ship_date": "01-Jun-2005",
           "support_type": "EoL Extension",
         },
         {
-          "product_code": "YSN38633",
+          "product_code": "YSN38632",
           "product_name": "Printer 3K 1640x",
           "ship_date": "01-Jun-2005",
           "support_type": "EoL Extension",
         },
         {
-          "product_code": "YSN38628",
+          "product_code": "YSN38623",
           "product_name": "Printer 3K 1640x",
           "ship_date": "01-Jun-2005",
           "support_type": "EoL Extension",
         },
         {
-          "product_code": "YSN12857",
+          "product_code": "YSN12854",
           "product_name": "Printer 3K 1640x",
           "ship_date": "01-Jun-2005",
           "support_type": "EoL Extension",
         },
         {
-          "product_code": "YSN918001",
+          "product_code": "YSN918005",
           "product_name": "Printer 3K 1640x",
           "ship_date": "01-Jun-2005",
           "support_type": "EoL Extension",
         },
         {
-          "product_code": "YSN38625",
+          "product_code": "YSN38626",
           "product_name": "Printer 3K 1640x",
           "ship_date": "01-Jun-2005",
           "support_type": "EoL Extension",
         },
         {
-          "product_code": "YSN38633",
-          "product_name": "Printer 3K 1640x",
-          "ship_date": "01-Jun-2005",
-          "support_type": "EoL Extension",
-        },
-        {
-          "product_code": "YSN38628",
-          "product_name": "Printer 3K 1640x",
-          "ship_date": "01-Jun-2005",
-          "support_type": "EoL Extension",
-        },
-        {
-          "product_code": "YSN12857",
-          "product_name": "Printer 3K 1640x",
-          "ship_date": "01-Jun-2005",
-          "support_type": "EoL Extension",
-        },
-        {
-          "product_code": "YSN918001",
-          "product_name": "Printer 3K 1640x",
-          "ship_date": "01-Jun-2005",
-          "support_type": "EoL Extension",
-        },
-        {
-          "product_code": "YSN38625",
-          "product_name": "Printer 3K 1640x",
-          "ship_date": "01-Jun-2005",
-          "support_type": "EoL Extension",
-        },
-        {
-          "product_code": "YSN38633",
+          "product_code": "YSN38637",
           "product_name": "Printer 3K 1640x",
           "ship_date": "01-Jun-2005",
           "support_type": "EoL Extension",
@@ -209,13 +201,49 @@ export default {
           "support_type": "EoL Extension",
         },
         {
-          "product_code": "YSN12857",
+          "product_code": "YSN12859",
           "product_name": "Printer 3K 1640x",
           "ship_date": "01-Jun-2005",
           "support_type": "EoL Extension",
         },
         {
-          "product_code": "YSN12368",
+          "product_code": "YSN918000",
+          "product_name": "Printer 3K 1640x",
+          "ship_date": "01-Jun-2005",
+          "support_type": "EoL Extension",
+        },
+        {
+          "product_code": "YSN38621",
+          "product_name": "Printer 3K 1640x",
+          "ship_date": "01-Jun-2005",
+          "support_type": "EoL Extension",
+        },
+        {
+          "product_code": "YSN38632",
+          "product_name": "Printer 3K 1640x",
+          "ship_date": "01-Jun-2005",
+          "support_type": "EoL Extension",
+        },
+        {
+          "product_code": "YSN38623",
+          "product_name": "Printer 3K 1640x",
+          "ship_date": "01-Jun-2005",
+          "support_type": "EoL Extension",
+        },
+        {
+          "product_code": "YSN12854",
+          "product_name": "Printer 3K 1640x",
+          "ship_date": "01-Jun-2005",
+          "support_type": "EoL Extension",
+        },
+        {
+          "product_code": "YSN12365",
+          "product_name": "Printer 3K 1640x",
+          "ship_date": "01-Jun-2005",
+          "support_type": "EoL Extension",
+        },
+        {
+          "product_code": "YSN12366",
           "product_name": "Printer 3K 1640x",
           "ship_date": "01-Jun-2005",
           "support_type": "EoL Extension",
@@ -247,6 +275,9 @@ export default {
     shiftAtStart() {
       this.endingPage = this.endingPage - this.startingPage + 1;
       this.startingPage = 1;
+    },
+    isRowInPage(index) {
+      return index <= (this.page * this.maxRowsPerPage -1) && index >= (this.page - 1) * this.maxRowsPerPage;
     }
   }
 
@@ -319,20 +350,14 @@ export default {
 }
 
 #table-body {
-  /* Set max width to include header and 15 rows */
-  max-height: 795px;
-  /* Set max width to include header and 15 rows */
-  min-height: 295px;
   padding: 0;
   margin: 0;
+  list-style-type: none;
 }
 
 .table-body-row {
   display: flex;
   user-select: none;
-}
-
-.table-body-row-underline:not(:last-child) {
   border-bottom: 1px solid #D0D5DD;
 }
 
