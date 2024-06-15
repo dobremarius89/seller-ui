@@ -92,8 +92,8 @@ export default {
     eventBus.on("applyFilterConfiguration", this.applyFilter);
     eventBus.on("deleteFilterConfiguration", this.deleteFilter);
     eventBus.on("clearFilterConfiguration", this.clearFilters);
-    /* Emit an event and send the first row from table (as default selection) without selecting it */
-    this.$emit("selectRows", new Map([[this.getRowKey(this.rows[0]), this.rows[0]]]));
+    /* Default select the first row */
+    this.selectOrDeselectRow(this.rows[0], {metaKey: true});
   },
 
   beforeUnmount() {
@@ -647,7 +647,7 @@ export default {
     selectOrDeselectRow(row, event) {
       const key = this.getRowKey(row);
       if (event.metaKey || event.ctrlKey) {
-        if (this.isRowSelected(key)) {
+        if (this.isRowSelected(key) && this.selectedRows.size > 1) {
           this.selectedRows.delete(key);
         } else {
           this.selectedRows.set(key, row);
