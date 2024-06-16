@@ -6,12 +6,12 @@
            :key="column.field"
            @mouseenter="showColumnFilter(column)"
            @mouseleave="hideColumnFilter(column)">
-        <div :class="{'table-header-text-animation' : shouldShowFilter(column)}" class="table-component-header-text">
+        <div :class="{'table-header-text-animation' : isMouseOverFilter(column) && !hasFilter(column)}" class="table-component-header-text">
           <span>{{ column.name }}</span>
         </div>
         <div :class="{'table-header-sort-animation-move' : shouldShowFilter(column)}"
              class="table-header-sort-image"
-             :style="{opacity: isSorted(column) || shouldShowFilter(column) ? 1 : 0}"
+             :style="{opacity: isSorted(column) || isMouseOverFilter(column) ? 1 : 0}"
              @click="sort(column)">
           <transition name="fade-in-out">
             <img :class="{'table-header-sort-animation-rotate' : isSortedAsc(column)}"
@@ -418,7 +418,13 @@ export default {
       this.shownColumFilter = null;
     },
     shouldShowFilter(column) {
-      return this.filterColumns.has(column.field) || this.shownColumFilter === column.field;
+      return this.hasFilter(column) || this.isMouseOverFilter(column);
+    },
+    hasFilter(column) {
+      return this.filterColumns.has(column.field);
+    },
+    isMouseOverFilter(column) {
+      return this.shownColumFilter === column.field;
     },
     isSortedAsc(column) {
       if (this.sortingColumn.column === column.field) {
@@ -764,7 +770,7 @@ export default {
 }
 
 .table-header-sort-animation-move {
-  transform: translateX(-30px);
+  transform: translateX(-15px);
 }
 
 .table-header-sort-animation-rotate {
@@ -808,9 +814,11 @@ export default {
   font-family: Inter-Regular, serif;
   font-size: 16px;
   color: #3C4144;
-  align-items: center;
-  justify-content: center;
-  display: flex;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: center;
+  line-height: 50px;
 }
 
 .table-component-group-header {
@@ -868,7 +876,7 @@ export default {
 
 .table-component-group-row:hover {
   cursor: pointer;
-  background-color: #C7C7C7;
+  background-color: #EDEDED;
 }
 
 .table-component-group-cell {

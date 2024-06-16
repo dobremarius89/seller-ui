@@ -77,7 +77,7 @@ export default {
     story: "What:" +
         "<p>Position aaS Printing for Acme Inc.</p>" +
         "Why:" +
-        "<p>They have 63 Laser <span class='link'>3K printers</span> coming End of Support this year " +
+        "<p>They have <span class='link'>63 Laser 3K printers</span> coming End of Support this year " +
         "suitable to target for refresh to Laser 4.5K aaS." +
         "</br>" +
         "50% of the orders they placed with us over the past 2 years have been through leasing, suggesting preference for OpEx." +
