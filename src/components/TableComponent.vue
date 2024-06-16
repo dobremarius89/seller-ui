@@ -6,7 +6,8 @@
            :key="column.field"
            @mouseenter="showColumnFilter(column)"
            @mouseleave="hideColumnFilter(column)">
-        <div :class="{'table-header-text-animation' : isMouseOverFilter(column) && !hasFilter(column)}" class="table-component-header-text">
+        <div :class="{'table-header-text-animation' : (isMouseOverFilter(column) && !hasFilter(column)) || (isSorted(column) && hasFilter(column))}"
+             class="table-component-header-text">
           <span>{{ column.name }}</span>
         </div>
         <div :class="{'table-header-sort-animation-move' : shouldShowFilter(column)}"
@@ -63,8 +64,15 @@
                  class="table-component-body-row"
                  :style="{width: scrollableWidth}"
                  @click="selectOrDeselectRow(index, $event)">
-              <div v-for="column in visibleColumns" class="table-component-body-cell" :key="column.field">
-                {{ row[column.field] }}
+              <div v-for="column in visibleColumns" :key="column.field">
+                <div v-if="column.field !== 'tags'" class="table-component-body-cell">
+                  {{ row[column.field] }}
+                </div>
+                <div v-else class="table-component-body-cell-tags">
+                  <div v-for="tag in row['tags']" class="tag" :key="tag">
+                    {{ tag }}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -132,7 +140,7 @@ export default {
         "customer": "Zellos Systems",
         "wintactic": "Transform aaS",
         "status": "Dismiss",
-        "tags": "#aas,#priority#2,#opex",
+        "tags": ["#aas","#priority#2","#opex","#others","#anaka"],
         "action_date": "",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -144,7 +152,7 @@ export default {
         "customer": "Acme Inc",
         "wintactic": "3D Engage",
         "status": "Review",
-        "tags": "#3D,#Manuf,#x-sell",
+        "tags": ["#3D","#Manuf","#x-sell"],
         "action_date": "1-Jun-24",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -156,7 +164,7 @@ export default {
         "customer": "Acme Inc",
         "wintactic": "Hyper-care Upsell",
         "status": "Review",
-        "tags": "#service,#priority_3",
+        "tags": ["#service","#priority_3"],
         "action_date": "",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -168,7 +176,7 @@ export default {
         "customer": "Acme Inc",
         "wintactic": "Renew Support",
         "status": "Dismiss",
-        "tags": "#service,#priority_2",
+        "tags": ["#service"],
         "action_date": "1-Feb-24",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -180,7 +188,7 @@ export default {
         "customer": "Acme Inc",
         "wintactic": "Tech Refresh Printers",
         "status": "Pursue",
-        "tags": "#retain,#priority_1,#traditional",
+        "tags": ["#retain","#priority_1","#traditional"],
         "action_date": "",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -192,7 +200,7 @@ export default {
         "customer": "Acme Inc",
         "wintactic": "Transform aaS",
         "status": "Review",
-        "tags": "#aas,#priority#2,#opex",
+        "tags": ["#aas","#priority#2","#opex"],
         "action_date": "",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -204,7 +212,7 @@ export default {
         "customer": "Astral",
         "wintactic": "Tech Refresh Printers",
         "status": "Dismiss",
-        "tags": "#retain,#priority_1,#traditional",
+        "tags": ["#retain","#priority_1","#traditional"],
         "action_date": "",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -216,7 +224,7 @@ export default {
         "customer": "Astral",
         "wintactic": "Transform aaS",
         "status": "Pursue",
-        "tags": "#aas,#priority#2,#opex",
+        "tags": ["#aas","#priority#2","#opex"],
         "action_date": "",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -228,7 +236,7 @@ export default {
         "customer": "Apex Ventures",
         "wintactic": "Tech Refresh Printers",
         "status": "Review",
-        "tags": "#retain,#priority_1,#traditional",
+        "tags": ["#retain","#priority_1","#traditional"],
         "action_date": "1-Jun",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -240,7 +248,7 @@ export default {
         "customer": "Apex Ventures",
         "wintactic": "Transform aaS",
         "status": "Review",
-        "tags": "#aas,#priority#2,#opex",
+        "tags": ["#aas","#priority#2","#opex"],
         "action_date": "1-Jun",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -252,7 +260,7 @@ export default {
         "customer": "Celestial Synthetics",
         "wintactic": "3D Engage",
         "status": "Review",
-        "tags": "#3D,#Manuf,#x-sell",
+        "tags": ["#3D","#Manuf","#x-sell"],
         "action_date": "1-Jun",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -264,7 +272,7 @@ export default {
         "customer": "Celestial Synthetics",
         "wintactic": "Renew Support",
         "status": "Review",
-        "tags": "#service,#priority_2",
+        "tags": ["#service","#priority_2"],
         "action_date": "",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -276,7 +284,7 @@ export default {
         "customer": "Cosmo Catalyst",
         "wintactic": "Hyper-care Upsell",
         "status": "Review",
-        "tags": "#service,#priority_3",
+        "tags": ["#service","#priority_3"],
         "action_date": "",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -288,7 +296,7 @@ export default {
         "customer": "CyberPulse",
         "wintactic": "Renew Support",
         "status": "Review",
-        "tags": "#service,#priority_2",
+        "tags": ["#service","#priority_2"],
         "action_date": "",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -300,7 +308,7 @@ export default {
         "customer": "CyberPulse",
         "wintactic": "Tech Refresh Printers",
         "status": "Review",
-        "tags": "#retain,#priority_1,#traditional",
+        "tags": ["#retain","#priority_1","#traditional"],
         "action_date": "",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -312,7 +320,7 @@ export default {
         "customer": "CyberPulse",
         "wintactic": "Transform aaS",
         "status": "Pursue",
-        "tags": "#aas,#priority#2,#opex",
+        "tags": ["#aas","#priority#2","#opex"],
         "action_date": "",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -324,7 +332,7 @@ export default {
         "customer": "Elysian Echo Systems",
         "wintactic": "3D Engage",
         "status": "Dismiss",
-        "tags": "#3D,#Manuf,#x-sell",
+        "tags": ["#3D","#Manuf","#x-sell"],
         "action_date": "",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -336,7 +344,7 @@ export default {
         "customer": "Elysian Echo Systems",
         "wintactic": "Hyper-care Upsell",
         "status": "Dismiss",
-        "tags": "#service,#priority_3",
+        "tags": ["#service","#priority_3"],
         "action_date": "",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -348,7 +356,7 @@ export default {
         "customer": "Elysian Echo Systems",
         "wintactic": "Transform aaS",
         "status": "Dismiss",
-        "tags": "#aas,#priority#2,#opex",
+        "tags": ["#aas","#priority#2","#opex"],
         "action_date": "",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -754,7 +762,7 @@ export default {
 }
 
 .table-header-text-animation {
-  transform: translateX(-30px);
+  transform: translateX(-10px);
 }
 
 .table-header-sort-image {
@@ -770,7 +778,7 @@ export default {
 }
 
 .table-header-sort-animation-move {
-  transform: translateX(-15px);
+  transform: translateX(-10px);
 }
 
 .table-header-sort-animation-rotate {
@@ -819,6 +827,30 @@ export default {
   text-overflow: ellipsis;
   text-align: center;
   line-height: 50px;
+}
+
+.table-component-body-cell-tags {
+  min-width: 200px;
+  max-width: 200px;
+  height: 50px;
+  font-family: Inter-Regular, serif;
+  font-size: 16px;
+  color: #3C4144;
+  display: flex;
+  overflow: hidden;
+  align-items: center;
+  justify-content: space-evenly;
+}
+
+.tag {
+  background-color: #F9FAFB;
+  border-radius: 10px;
+  border: 1px solid #EAECF0;
+  height: 20px;
+  padding: 3px;
+  margin-left: 3px;
+  font-family: Inter-Medium, serif;
+  color: #344054;
 }
 
 .table-component-group-header {
