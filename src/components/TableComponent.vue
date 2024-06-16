@@ -43,12 +43,21 @@
           </div>
           <div v-if="isExpanded(group)" class="table-component-group-rows">
             <transition-group name="flip-list">
-              <div v-for="row in value.rows"
+              <div v-for="(row, index) in value.rows"
+                   :class="{'table-component-body-row-selected' : isRowSelected(getRowKey(row))}"
                    class="table-component-group-row"
                    :style="{width: scrollableWidth}"
-                   :key="row.customer + row.wintactic">
-                <div v-for="column in visibleColumns" class="table-component-group-cell" :key="column.field">
-                  {{ row[column.field] }}
+                   :key="row.customer + row.wintactic"
+                   @click="selectOrDeselectGroupRow(group, index, $event)">
+                <div v-for="column in visibleColumns" :key="column.field">
+                  <div v-if="column.field !== 'tags'" class="table-component-body-cell">
+                    {{ row[column.field] }}
+                  </div>
+                  <div v-else class="table-component-body-cell-tags">
+                    <div v-for="tag in row['tags']" class="tag" :key="tag">
+                      {{ tag }}
+                    </div>
+                  </div>
                 </div>
               </div>
             </transition-group>
@@ -366,6 +375,7 @@ export default {
       }
     ],
     groupedRows: new Map(),
+    groupedRowsArray: [],
     selectedRows: new Map(),
     selectedWithShiftRows: new Map(),
     expandedGroups: new Set(),
@@ -408,6 +418,7 @@ export default {
         groupedData.get(value).rows.push(row);
       });
       this.groupedRows = groupedData;
+      this.groupedRowsArray = Array.from(this.groupedRows.values()).flatMap(value => value.rows);
     },
     toggleExpandGroup(group) {
       if (this.expandedGroups.has(group)) {
@@ -674,7 +685,7 @@ export default {
           this.selectedRows.set(key, row);
         }
       } else if (event.shiftKey) {
-        const lastSelected = this.getIndexByKey(this.selectedRowKeyBeforeShift);
+        const lastSelected = this.getRowIndexByKey(this.selectedRowKeyBeforeShift);
         this.selectedWithShiftRows = new Map();
         if (index > lastSelected) {
           for (let i = lastSelected; i <= index; i++) {
@@ -696,14 +707,53 @@ export default {
       }
       this.$emit("selectRows", this.selectedRows);
     },
+    selectOrDeselectGroupRow(group, index, event) {
+      const row = this.groupedRows.get(group).rows[index];
+      const key = this.getRowKey(row);
+      if (event.metaKey || event.ctrlKey) {
+        this.selectedRows = new Map([...this.selectedRows, ...this.selectedWithShiftRows]);
+        this.selectedRowKeyBeforeShift = key;
+        if (this.isRowSelected(key) && this.selectedRows.size > 1) {
+          this.selectedRows.delete(key);
+          this.selectedWithShiftRows.delete(key)
+        } else {
+          this.selectedRows.set(key, row);
+        }
+      } else if (event.shiftKey) {
+        const lastSelected = this.getGroupRowIndexByKey(this.selectedRowKeyBeforeShift);
+        const arrayIndex = this.getGroupRowIndexByKey(key);
+        this.selectedWithShiftRows = new Map();
+        if (arrayIndex > lastSelected) {
+          for (let i = lastSelected; i <= arrayIndex; i++) {
+            const rowToAdd = this.rows[i];
+            this.selectedWithShiftRows.set(this.getRowKey(rowToAdd), rowToAdd);
+          }
+        }
+        if (arrayIndex < lastSelected) {
+          for (let i = arrayIndex; i <= lastSelected; i++) {
+            const rowToAdd = this.rows[i];
+            this.selectedWithShiftRows.set(this.getRowKey(rowToAdd), rowToAdd);
+          }
+        }
+      } else {
+        this.selectedRowKeyBeforeShift = key;
+        this.selectedWithShiftRows = new Map();
+        this.selectedRows = new Map();
+        this.selectedRows.set(key, row);
+      }
+      this.$emit("selectRows", this.selectedRows);
+    },
     isRowSelected(key) {
       return this.selectedRows.has(key) || this.selectedWithShiftRows.has(key);
     },
     getRowKey(row) {
       return row.customer + row.wintactic;
     },
-    getIndexByKey(key) {
+    getRowIndexByKey(key) {
       return this.rows.findIndex(row => key === this.getRowKey(row));
+    },
+    getGroupRowIndexByKey(key) {
+      return this.groupedRowsArray.findIndex(row => key === this.getRowKey(row));
     },
     initializeSelectedRows() {
       this.selectedRows = new Map();
@@ -727,6 +777,7 @@ export default {
   overflow-x: hidden;
   /* Calculate high as 100vh minus headers, minus metrics, minus 3 margins */
   height: calc(100vh - 100px - 45px - 226px - 55px - 40px - 40px - 40px);
+  user-select: none;
 }
 
 #table-component-header {
@@ -801,7 +852,6 @@ export default {
 .table-component-body-row {
   display: flex;
   transition: background-color 0.5s linear;
-  user-select: none;
 }
 
 .table-component-body-row:hover {
@@ -861,7 +911,6 @@ export default {
   display: flex;
   cursor: pointer;
   border-bottom: 1px solid #D0D5DD;
-  user-select: none;
 }
 
 .table-component-group-text {
