@@ -2,18 +2,25 @@
   <div id="container">
     <div id="content">
       <header-component/>
-      <div id="home-cards">
-        <upcoming-wintactics/>
-        <strategy-card/>
-        <strategy-card/>
-        <customer-engaged/>
+      <transition name="collapse">
+        <div v-show="!isMetricsCollapsed" id="home-cards">
+          <upcoming-wintactics/>
+          <strategy-card/>
+          <strategy-card/>
+          <customer-engaged/>
+        </div>
+      </transition>
+      <div id="collapse-container">
+        <img :class="{'arrow-up' : isMetricsCollapsed}" class="arrow" src="@/assets/home/arrow_down.png" @click="collapse()">
       </div>
       <div id="tables-container">
         <table-header style="grid-row: 1 / 2; grid-column: 1 / 2" @openColumnConfiguration="openColumnConfiguration"/>
         <table-component style="grid-row: 2 / 3; grid-column: 1 / 2" :columns="columns"
+                         :isExpanded="isMetricsCollapsed"
                          @selectRows="selectRows"
                          @openFilterConfiguration="openFilterConfiguration"/>
         <story-component style="grid-row: 1 / 3; grid-column: 2 / 3"
+                         :isExpanded="isMetricsCollapsed"
                          :selectedRows="selectedRows"/>
         <column-configuration v-if="isColumnConfigurationOpened"
                               :columns="columns"
@@ -123,7 +130,8 @@ export default {
     filterValues: [],
     selectedRows: new Map(),
     isColumnConfigurationOpened: false,
-    isFilterConfigurationOpened: false
+    isFilterConfigurationOpened: false,
+    isMetricsCollapsed: false,
   }),
 
   methods: {
@@ -157,12 +165,15 @@ export default {
       if (!classes.has("status-dropdown")) {
         eventBus.emit("closeStatusDropdown");
       }
+    },
+    collapse() {
+      this.isMetricsCollapsed = !this.isMetricsCollapsed;
     }
   }
 }
 </script>
 
-<style>
+<style scoped>
 #container {
   margin: 0 auto;
   width: 1920px;
@@ -171,16 +182,43 @@ export default {
 }
 
 #home-cards {
-  margin: 40px 60px 0 60px;
+  margin: 0 60px 0 60px;
   display: flex;
   justify-content: space-between;
+  transition: height 0.5s;
+  overflow: hidden;
 }
 
 #tables-container {
-  margin: 40px 60px 0 60px;
+  margin: 0 60px 0 60px;
   display: grid;
   /* Table's width should match the left margin of header's search bar */
   /* Calculate width as 60%* of total width, including left margin */
   grid-template-columns: calc((100% + 2 * 60px) * 0.6) calc((100% + 2 * 60px) * 0.338);
+}
+
+.collapse-enter-active, .collapse-leave-active {
+  height: 225px;
+}
+
+.collapse-enter-from, .collapse-leave-to {
+  height: 0;
+}
+
+#collapse-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 30px;
+}
+
+.arrow {
+  transition: transform 0.5s;
+  margin-left: 80px;
+  margin-bottom: 20px;
+}
+
+.arrow-up {
+  transform: rotate(180deg);
 }
 </style>

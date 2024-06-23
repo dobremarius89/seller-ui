@@ -82,6 +82,7 @@ export default defineComponent({
   display: flex;
   align-items: center;
   background-color: white;
+  margin-bottom: 30px;
 }
 
 #logo-search-bar {

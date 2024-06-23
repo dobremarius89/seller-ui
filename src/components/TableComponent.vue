@@ -1,5 +1,5 @@
 <template>
-  <div id="table-component">
+  <div id="table-component" :style="{height : containerHeight}">
     <div id="table-component-header">
       <div v-for="column in visibleColumns"
            class="table-component-header-cell"
@@ -36,12 +36,12 @@
             <div class="table-component-group-name">
               <div class="table-component-group-text">{{ group }}</div>
               <div class="table-component-group-count">{{ value.count }}</div>
-              <img :class="{'table-component-group-arrow-up' : isExpanded(group)}"
+              <img :class="{'table-component-group-arrow-up' : isGroupExpanded(group)}"
                    class="table-component-group-arrow"
                    src="@/assets/home/arrow_down.png"/>
             </div>
           </div>
-          <div v-if="isExpanded(group)" class="table-component-group-rows">
+          <div v-if="isGroupExpanded(group)" class="table-component-group-rows">
             <transition-group name="flip-list">
               <div v-for="(row, index) in value.rows"
                    :class="{'table-component-body-row-selected' : isRowSelected(getRowKey(row))}"
@@ -126,8 +126,7 @@ export default {
     columns() {
       const newGroupingColumn = this.columns.find(column => column.grouping === true);
       if (newGroupingColumn) {
-        if (newGroupingColumn.field !== this.groupingColumn)
-        {
+        if (newGroupingColumn.field !== this.groupingColumn) {
           this.groupingColumn = newGroupingColumn.field;
           this.groupByColumn(newGroupingColumn.field);
           this.initializeSelectedRows();
@@ -140,7 +139,8 @@ export default {
   },
 
   props: {
-    columns: Object
+    columns: Object,
+    isExpanded: Boolean
   },
 
   data: () => ({
@@ -149,7 +149,7 @@ export default {
         "customer": "Zellos Systems",
         "wintactic": "Transform aaS",
         "status": "Dismiss",
-        "tags": ["#aas","#priority#2","#opex","#others","#anaka"],
+        "tags": ["#aas", "#priority#2", "#opex", "#others", "#anaka"],
         "action_date": "",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -161,7 +161,7 @@ export default {
         "customer": "Acme Inc",
         "wintactic": "3D Engage",
         "status": "Review",
-        "tags": ["#3D","#Manuf","#x-sell"],
+        "tags": ["#3D", "#Manuf", "#x-sell"],
         "action_date": "1-Jun-24",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -173,7 +173,7 @@ export default {
         "customer": "Acme Inc",
         "wintactic": "Hyper-care Upsell",
         "status": "Review",
-        "tags": ["#service","#priority_3"],
+        "tags": ["#service", "#priority_3"],
         "action_date": "",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -197,7 +197,7 @@ export default {
         "customer": "Acme Inc",
         "wintactic": "Tech Refresh Printers",
         "status": "Pursue",
-        "tags": ["#retain","#priority_1","#traditional"],
+        "tags": ["#retain", "#priority_1", "#traditional"],
         "action_date": "",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -209,7 +209,7 @@ export default {
         "customer": "Acme Inc",
         "wintactic": "Transform aaS",
         "status": "Review",
-        "tags": ["#aas","#priority#2","#opex"],
+        "tags": ["#aas", "#priority#2", "#opex"],
         "action_date": "",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -221,7 +221,7 @@ export default {
         "customer": "Astral",
         "wintactic": "Tech Refresh Printers",
         "status": "Dismiss",
-        "tags": ["#retain","#priority_1","#traditional"],
+        "tags": ["#retain", "#priority_1", "#traditional"],
         "action_date": "",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -233,7 +233,7 @@ export default {
         "customer": "Astral",
         "wintactic": "Transform aaS",
         "status": "Pursue",
-        "tags": ["#aas","#priority#2","#opex"],
+        "tags": ["#aas", "#priority#2", "#opex"],
         "action_date": "",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -245,7 +245,7 @@ export default {
         "customer": "Apex Ventures",
         "wintactic": "Tech Refresh Printers",
         "status": "Review",
-        "tags": ["#retain","#priority_1","#traditional"],
+        "tags": ["#retain", "#priority_1", "#traditional"],
         "action_date": "1-Jun",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -257,7 +257,7 @@ export default {
         "customer": "Apex Ventures",
         "wintactic": "Transform aaS",
         "status": "Review",
-        "tags": ["#aas","#priority#2","#opex"],
+        "tags": ["#aas", "#priority#2", "#opex"],
         "action_date": "1-Jun",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -269,7 +269,7 @@ export default {
         "customer": "Celestial Synthetics",
         "wintactic": "3D Engage",
         "status": "Review",
-        "tags": ["#3D","#Manuf","#x-sell"],
+        "tags": ["#3D", "#Manuf", "#x-sell"],
         "action_date": "1-Jun",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -281,7 +281,7 @@ export default {
         "customer": "Celestial Synthetics",
         "wintactic": "Renew Support",
         "status": "Review",
-        "tags": ["#service","#priority_2"],
+        "tags": ["#service", "#priority_2"],
         "action_date": "",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -293,7 +293,7 @@ export default {
         "customer": "Cosmo Catalyst",
         "wintactic": "Hyper-care Upsell",
         "status": "Review",
-        "tags": ["#service","#priority_3"],
+        "tags": ["#service", "#priority_3"],
         "action_date": "",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -305,7 +305,7 @@ export default {
         "customer": "CyberPulse",
         "wintactic": "Renew Support",
         "status": "Review",
-        "tags": ["#service","#priority_2"],
+        "tags": ["#service", "#priority_2"],
         "action_date": "",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -317,7 +317,7 @@ export default {
         "customer": "CyberPulse",
         "wintactic": "Tech Refresh Printers",
         "status": "Review",
-        "tags": ["#retain","#priority_1","#traditional"],
+        "tags": ["#retain", "#priority_1", "#traditional"],
         "action_date": "",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -329,7 +329,7 @@ export default {
         "customer": "CyberPulse",
         "wintactic": "Transform aaS",
         "status": "Pursue",
-        "tags": ["#aas","#priority#2","#opex"],
+        "tags": ["#aas", "#priority#2", "#opex"],
         "action_date": "",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -341,7 +341,7 @@ export default {
         "customer": "Elysian Echo Systems",
         "wintactic": "3D Engage",
         "status": "Dismiss",
-        "tags": ["#3D","#Manuf","#x-sell"],
+        "tags": ["#3D", "#Manuf", "#x-sell"],
         "action_date": "",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -353,7 +353,7 @@ export default {
         "customer": "Elysian Echo Systems",
         "wintactic": "Hyper-care Upsell",
         "status": "Dismiss",
-        "tags": ["#service","#priority_3"],
+        "tags": ["#service", "#priority_3"],
         "action_date": "",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -365,7 +365,7 @@ export default {
         "customer": "Elysian Echo Systems",
         "wintactic": "Transform aaS",
         "status": "Dismiss",
-        "tags": ["#aas","#priority#2","#opex"],
+        "tags": ["#aas", "#priority#2", "#opex"],
         "action_date": "",
         "start_date": "1-Jan-24",
         "end_date": "31-Dec-24",
@@ -396,6 +396,15 @@ export default {
     },
     isGroupingActive() {
       return !!this.groupingColumn;
+    },
+    containerHeight() {
+      if (this.isExpanded) {
+        // 100vh minus headers, minus metrics, minus 3 margins, plus metrics height
+        return `calc(100vh - 100px - 226px - 55px - 40px - 40px - 40px + 225px)`
+      } else {
+        // 100vh minus headers, minus metrics, minus 3 margins
+        return `calc(100vh - 100px - 226px - 55px - 40px - 40px - 40px)`
+      }
     }
   },
 
@@ -405,18 +414,18 @@ export default {
       this.rows
           .filter(row => row.filtered !== true)
           .forEach(row => {
-        const value = row[column];
-        if (!groupedData.has(value)) {
-          groupedData.set(value, {
-            field: column,
-            value: value,
-            count: 0,
-            rows: []
+            const value = row[column];
+            if (!groupedData.has(value)) {
+              groupedData.set(value, {
+                field: column,
+                value: value,
+                count: 0,
+                rows: []
+              });
+            }
+            groupedData.get(value).count++;
+            groupedData.get(value).rows.push(row);
           });
-        }
-        groupedData.get(value).count++;
-        groupedData.get(value).rows.push(row);
-      });
       this.groupedRows = groupedData;
       this.groupedRowsArray = Array.from(this.groupedRows.values()).flatMap(value => value.rows);
     },
@@ -427,7 +436,7 @@ export default {
         this.expandedGroups.add(group);
       }
     },
-    isExpanded(group) {
+    isGroupExpanded(group) {
       return this.expandedGroups.has(group);
     },
     showColumnFilter(column) {
@@ -766,11 +775,11 @@ export default {
 
 <style scoped>
 #table-component {
-  /* Calculate high as 100vh minus headers, minus metrics, minus 3 margins */
-  height: calc(100vh - 100px - 226px - 55px - 40px - 40px - 40px);
+  /* High is computed property */
   overflow-x: hidden;
   overflow-y: auto;
   background-color: #FFFAEB;
+  transition: height 0.5s;
 }
 
 #table-component-body {
@@ -995,5 +1004,13 @@ export default {
   100% {
     opacity: 1;
   }
+}
+
+.collapse-enter-active, .collapse-leave-active {
+  height: 228px;
+}
+
+.collapse-enter-from, .collapse-leave-to {
+  height: 0;
 }
 </style>

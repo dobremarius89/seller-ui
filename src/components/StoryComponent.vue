@@ -38,6 +38,7 @@
       </div>
       <div v-if="activeTab === 1"
            id="story-content-body"
+           :style="{height : contentHeight}"
            v-html="story"
            v-on:click="openInsight($event)"/>
       <div v-if="activeTab === 2" id="story-content-body"/>
@@ -63,12 +64,22 @@ export default {
   },
 
   props: {
-    selectedRows: Map
+    selectedRows: Map,
+    isExpanded: Boolean
   },
 
   computed: {
     selectedRow() {
         return this.selectedRows.values().next().value;
+    },
+    contentHeight() {
+      if (this.isExpanded) {
+        // 100vh minus headers, minus metrics, minus 3 margins, plus metrics height
+        return `calc(100vh - 100px - 45px - 226px - 55px - 40px - 40px - 40px - 30px + 225px)`
+      } else {
+        // 100vh minus headers, minus metrics, minus 3 margins
+        return `calc(100vh - 100px - 45px - 226px - 55px - 40px - 40px - 40px - 30px)`
+      }
     }
   },
 
@@ -148,7 +159,8 @@ export default {
 
 #story-content-body {
   /* Calculate high as 100vh minus headers, minus metrics, minus 3 margins, minus padding */
-  height: calc(100vh - 100px - 45px - 226px - 55px - 40px - 40px - 40px - 30px);
+  /* High is computed property */
+  transition: height 0.5s;
   padding: 30px 30px 0 30px;
   font-size: 16px;
   overflow-y: scroll;
