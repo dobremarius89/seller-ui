@@ -216,6 +216,7 @@ export default {
   transition: transform 0.5s;
   margin-left: 80px;
   margin-bottom: 20px;
+  cursor: pointer;
 }
 
 .arrow-up {

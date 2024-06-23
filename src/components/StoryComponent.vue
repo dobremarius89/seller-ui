@@ -74,11 +74,11 @@ export default {
     },
     contentHeight() {
       if (this.isExpanded) {
-        // 100vh minus headers, minus metrics, minus 3 margins, plus metrics height
-        return `calc(100vh - 100px - 45px - 226px - 55px - 40px - 40px - 40px - 30px + 225px)`
+        // 100vh minus headers, minus 3 margins, minus table functions and header, minus content padding
+        return `calc(100vh - 100px - 30px - 30px - 55px - 45px - 30px - 30px)`
       } else {
-        // 100vh minus headers, minus metrics, minus 3 margins
-        return `calc(100vh - 100px - 45px - 226px - 55px - 40px - 40px - 40px - 30px)`
+        // 100vh minus headers, minus metrics, minus 3 margins, minus table functions and header, minus content padding
+        return `calc(100vh - 100px - 30px - 226px - 30px - 55px - 45px - 30px - 30px)`
       }
     }
   },

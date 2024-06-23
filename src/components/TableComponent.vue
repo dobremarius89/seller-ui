@@ -1,5 +1,5 @@
 <template>
-  <div id="table-component" :style="{height : containerHeight}">
+  <div id="table-component">
     <div id="table-component-header">
       <div v-for="column in visibleColumns"
            class="table-component-header-cell"
@@ -26,7 +26,7 @@
         </transition>
       </div>
     </div>
-    <div v-dragscroll.x id="table-component-body">
+    <div v-dragscroll.x id="table-component-body" :style="{height : containerHeight}">
       <!-- Grouped rows -->
       <transition-group name="flip-list">
         <div v-for="[group, value] in groupedRows.entries()" :key="group">
@@ -399,11 +399,11 @@ export default {
     },
     containerHeight() {
       if (this.isExpanded) {
-        // 100vh minus headers, minus metrics, minus 3 margins, plus metrics height
-        return `calc(100vh - 100px - 226px - 55px - 40px - 40px - 40px + 225px)`
+        // 100vh minus headers, minus 3 margins, minus table functions and header
+        return `calc(100vh - 100px - 30px - 30px - 55px - 45px - 30px)`
       } else {
-        // 100vh minus headers, minus metrics, minus 3 margins
-        return `calc(100vh - 100px - 226px - 55px - 40px - 40px - 40px)`
+        // 100vh minus headers, minus metrics, minus 3 margins, minus table functions and header
+        return `calc(100vh - 100px - 30px - 226px - 30px - 55px - 45px - 30px)`
       }
     }
   },
@@ -775,18 +775,16 @@ export default {
 
 <style scoped>
 #table-component {
-  /* High is computed property */
-  overflow-x: hidden;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   background-color: #FFFAEB;
-  transition: height 0.5s;
 }
 
 #table-component-body {
+  /* High is computed property */
   overflow-x: hidden;
-  /* Calculate high as 100vh minus headers, minus metrics, minus 3 margins */
-  height: calc(100vh - 100px - 45px - 226px - 55px - 40px - 40px - 40px);
   user-select: none;
+  transition: height 0.5s;
 }
 
 #table-component-header {
