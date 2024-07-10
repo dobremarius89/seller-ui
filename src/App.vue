@@ -3,9 +3,19 @@
 </template>
 
 <script>
+import {getUserName} from "@/config/store.config";
+import router, {Route} from "@/config/router.config";
+
 export default {
+
   mounted() {
+    if (!getUserName()) {
+      router.push({
+        name: Route.LOGIN,
+      });
+    }
   }
+
 }
 </script>
 

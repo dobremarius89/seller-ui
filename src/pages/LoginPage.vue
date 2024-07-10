@@ -10,11 +10,11 @@
         <div id="login-form">
           <div class="login-field-container">
             <label class="login-field-label">Email</label>
-            <input class="login-field-input" placeholder="Enter your email"/>
+            <input class="login-field-input" v-model="email" placeholder="Enter your email"/>
           </div>
           <div class="login-field-container">
             <label class="login-field-label">Password</label>
-            <input class="login-field-input" placeholder="•••••••" type="password"/>
+            <input class="login-field-input" v-model="password" placeholder="•••••••" type="password"/>
           </div>
           <div id="login-extras">
             <input id="remember-checkbox" type="checkbox">
@@ -33,21 +33,34 @@
 
 <script>
 import router, {Route} from "@/config/router.config";
+import {authenticationUrl} from "@/config/properties.config";
+import {apiRequest, POST} from "@/config/axios.config";
+import store from "@/config/store.config";
 
 export default {
   data: () => ({
+    email: null,
     password: null,
-    wrongUserName: null,
-    wrongPassword: null,
     error: null
   }),
 
   methods: {
     login() {
-      router.push({
-        name: Route.HOME
-      })
-    }
+      const userDetails = {
+        email: this.email,
+        password: this.password
+      };
+      console.log(JSON.stringify(userDetails))
+      apiRequest(authenticationUrl(), POST, userDetails).then(response => {
+        store.commit("setJwtToken", response.data.token);
+        store.commit("setUserName", response.data.firstName);
+        router.push({
+          name: Route.HOME
+        });
+      }).catch(error => {
+        this.error = error.response.data.message;
+      });
+    },
   }
 }
 </script>
